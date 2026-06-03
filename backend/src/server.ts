@@ -18,8 +18,10 @@ app.get('/health', (_req, res) => {
   res.json({ ok: true, data: { status: 'ok' } });
 });
 
-app.use(inventoryRouter);
-app.use(appointmentRouter);
+// Feature routers are mounted under /api to match the frontend client base
+// (VITE_API_URL ?? '/api'), e.g. /api/inventory/items, /api/executions/:id/complete.
+app.use('/api', inventoryRouter);
+app.use('/api', appointmentRouter);
 
 // Central error handler — MUST be mounted last.
 app.use(errorHandler);

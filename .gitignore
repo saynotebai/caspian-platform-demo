@@ -1,1 +1,7 @@
 .vercel
+
+# Node / build artifacts (backend + frontend)
+node_modules/
+dist/
+.env
+*.local
