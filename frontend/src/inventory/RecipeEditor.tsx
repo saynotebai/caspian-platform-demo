@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import type {
+  Control,
+  FieldError,
+  UseFormRegister,
+  UseFormWatch
+} from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   useMutation,
@@ -344,12 +350,10 @@ function EditorPanel({ serviceId, serviceName, onClose }: EditorPanelProps) {
 
 // -- Single ingredient row ---------------------------------------------------
 
-import type {
-  Control,
-  FieldErrors,
-  UseFormRegister,
-  UseFormWatch
-} from 'react-hook-form';
+interface IngredientRowError {
+  inventoryItemId?: FieldError;
+  quantity?: FieldError;
+}
 
 interface IngredientRowProps {
   index: number;
@@ -358,11 +362,7 @@ interface IngredientRowProps {
   register: UseFormRegister<FormValues>;
   watch: UseFormWatch<FormValues>;
   onRemove: () => void;
-  error: FieldErrors<FormValues>['ingredients'] extends infer T
-    ? T extends Array<infer U>
-      ? U
-      : undefined
-    : undefined;
+  error?: IngredientRowError;
 }
 
 function IngredientRow({
