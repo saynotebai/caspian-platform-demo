@@ -1,470 +1,233 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Caspian Platform — HR, учёт рабочего времени и payroll с ролевым доступом. Интерактивный шаблон (демо на мок-данных).">
-<meta name="theme-color" content="#0891b2">
-<title>Caspian Platform — HR / Time-Tracking / Payroll</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="CaspianDentos — калькулятор окупаемости инвестиций для стоматологической клиники. Мгновенный расчёт срока окупаемости пакета." />
+<meta name="theme-color" content="#06b6d4" />
+<meta property="og:title" content="CaspianDentos · Калькулятор окупаемости" />
+<meta property="og:description" content="Считайте срок окупаемости инвестиций в клинику на лету." />
+<meta property="og:type" content="website" />
+<title>CaspianDentos · Калькулятор окупаемости</title>
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%2306b6d4'/%3E%3Cpath d='M5 17V7l4 4 3-3 4 5' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+
 <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-<script src="https://unpkg.com/lucide@latest"></script>
+
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.3.1",
+    "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
+    "framer-motion": "https://esm.sh/framer-motion@11.11.17?external=react"
+  }
+}
+</script>
+
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-*{ -webkit-tap-highlight-color:transparent; }
-body{ font-family:'Inter',sans-serif; background:#F8FAFC; color:#1e293b; }
-.card{ box-shadow:0 1px 3px rgba(15,23,42,.04), 0 18px 40px -18px rgba(15,23,42,.10); }
-.fade-in{ animation:fade .35s ease both; }
-@keyframes fade{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;} }
-.nav-active{ background:#ecfeff; color:#0891b2; font-weight:600; }
-.bar{ transition:width .6s cubic-bezier(.4,0,.2,1); }
-.custom-scroll::-webkit-scrollbar{ width:6px; height:6px; }
-.custom-scroll::-webkit-scrollbar-thumb{ background:#cbd5e1; border-radius:99px; }
-input:focus,select:focus{ outline:none; border-color:#06b6d4; box-shadow:0 0 0 3px rgba(6,182,212,.15); }
-.pulse{ animation:pulse 2s infinite; } @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.4;} }
-.chk:checked + label .box{ background:#0891b2; border-color:#0891b2; }
-.chk:checked + label .box i{ opacity:1; }
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+  *{ -webkit-tap-highlight-color:transparent; }
+  body{
+    font-family:'Inter',sans-serif;
+    background:
+      radial-gradient(1100px 600px at 15% -5%, #ecfeff 0%, transparent 55%),
+      radial-gradient(900px 600px at 100% 0%, #f0fdfa 0%, transparent 50%),
+      #f8fafc;
+    color:#1e293b;
+    min-height:100vh;
+  }
+  .fade-up{ animation:fadeUp .5s cubic-bezier(.16,1,.3,1) both; }
+  @keyframes fadeUp{ from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:none;} }
+
+  /* Slider — Stripe-like */
+  .cdt-slider{ -webkit-appearance:none; appearance:none; height:6px; border-radius:99px; cursor:pointer; outline:none; }
+  .cdt-slider::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none; width:22px; height:22px; border-radius:50%;
+    background:#fff; border:2px solid #06b6d4; box-shadow:0 2px 8px rgba(6,182,212,.35);
+    transition:transform .15s ease, box-shadow .15s ease; margin-top:0;
+  }
+  .cdt-slider::-webkit-slider-thumb:hover{ transform:scale(1.12); }
+  .cdt-slider::-webkit-slider-thumb:active{ transform:scale(1.05); box-shadow:0 0 0 6px rgba(6,182,212,.15); }
+  .cdt-slider::-moz-range-thumb{
+    width:22px; height:22px; border-radius:50%; background:#fff; border:2px solid #06b6d4;
+    box-shadow:0 2px 8px rgba(6,182,212,.35); cursor:pointer;
+  }
+  .cdt-slider::-moz-range-track{ background:transparent; }
 </style>
 </head>
+
 <body class="antialiased">
-
-<div class="fixed bottom-4 right-4 z-50 px-3 py-1.5 rounded-full bg-slate-900 text-white text-[11px] font-semibold shadow-lg flex items-center gap-1.5">
-  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse"></span><span id="demo-badge">ДЕМО · мок-данные</span>
-</div>
-
-<!-- ============ LOGIN ============ -->
-<div id="login" class="min-h-screen flex items-center justify-center p-4">
-  <div class="w-full max-w-md">
-    <div class="flex items-center justify-between mb-6">
-      <div class="flex items-center gap-3">
-        <div class="w-12 h-12 bg-cyan-600 rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-lg shadow-cyan-600/25">C</div>
-        <div><div class="text-xl font-bold tracking-tight text-slate-900">Caspian Platform</div><div class="text-[11px] text-slate-400 uppercase tracking-[0.15em]">HR · Time · Payroll</div></div>
+  <main class="mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center px-4 py-12">
+    <div class="fade-up mb-8 text-center">
+      <div class="mb-3 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/70 px-3.5 py-1.5 text-[12px] font-semibold text-slate-500 backdrop-blur">
+        <span class="inline-block h-1.5 w-1.5 rounded-full bg-cyan-500"></span>
+        CaspianDentos · Dental OS
       </div>
-      <button onclick="toggleLang()" id="lang-btn-login" class="w-11 h-11 rounded-xl border border-slate-200 bg-white font-bold text-xs text-slate-600 hover:border-cyan-300">RU</button>
+      <h1 class="text-[28px] font-extrabold tracking-tight text-slate-900 sm:text-[34px]">
+        Калькулятор окупаемости
+      </h1>
+      <p class="mx-auto mt-2 max-w-md text-[15px] leading-relaxed text-slate-500">
+        Узнайте, за сколько месяцев окупится инвестиция в клинику.
+        Расчёт обновляется мгновенно.
+      </p>
     </div>
 
-    <div class="bg-white rounded-2xl card p-6">
-      <h1 class="text-lg font-bold text-slate-900 flex items-center gap-2"><i data-lucide="smartphone" class="w-5 h-5 text-cyan-600"></i><span id="t-login-title"></span></h1>
-      <p class="text-sm text-slate-500 mt-1 mb-5" id="t-login-sub"></p>
-      <div id="step-phone">
-        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2" id="t-phone-label"></label>
-        <input id="phone" value="+7 707 000 00 00" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm">
-        <button onclick="sendOtp()" class="mt-3 w-full py-3 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-sm transition-all flex items-center justify-center gap-2"><i data-lucide="send" class="w-4 h-4"></i><span id="t-get-code"></span></button>
-      </div>
-      <div id="step-otp" class="hidden">
-        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2" id="t-otp-label"></label>
-        <input id="otp" placeholder="0000" maxlength="4" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-center text-2xl tracking-[0.5em] font-bold">
-        <p class="text-[11px] text-slate-400 mt-1" id="t-otp-hint"></p>
-        <button onclick="verifyOtp()" class="mt-3 w-full py-3 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-sm transition-all" id="t-enter"></button>
-      </div>
-    </div>
+    <div id="root" class="fade-up w-full flex justify-center" style="animation-delay:.08s"></div>
 
-    <div class="bg-white rounded-2xl card p-6 mt-4">
-      <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3" id="t-quick"></p>
-      <div id="role-grid" class="grid grid-cols-2 gap-2"></div>
-      <p class="text-[11px] text-slate-400 mt-3 leading-relaxed" id="t-rbac-note"></p>
-    </div>
-  </div>
-</div>
+    <footer class="fade-up mt-10 text-center text-[12px] text-slate-400" style="animation-delay:.16s">
+      © <span id="year"></span> CaspianDentos · модуль для Dental OS
+    </footer>
+  </main>
 
-<!-- ============ APP SHELL ============ -->
-<div id="app" class="hidden min-h-screen">
-  <header class="h-16 bg-white border-b border-slate-200 sticky top-0 z-30 flex items-center justify-between px-4 lg:px-6">
-    <div class="flex items-center gap-3">
-      <button onclick="toggleSidebar()" class="lg:hidden w-10 h-10 rounded-lg hover:bg-slate-100 flex items-center justify-center"><i data-lucide="menu" class="w-5 h-5"></i></button>
-      <div class="w-9 h-9 bg-cyan-600 rounded-xl flex items-center justify-center text-white font-bold shadow shadow-cyan-600/25">C</div>
-      <span class="font-bold tracking-tight text-slate-900 hidden sm:block">Caspian Platform</span>
-    </div>
-    <div class="flex items-center gap-2 lg:gap-3">
-      <div id="clock" class="text-sm font-mono text-slate-500 hidden md:block"></div>
-      <button onclick="toggleLang()" id="lang-btn" class="w-10 h-10 rounded-lg border border-slate-200 bg-white font-bold text-xs text-slate-600 hover:border-cyan-300">RU</button>
-      <div id="role-chip" class="px-3 py-1.5 rounded-lg text-xs font-semibold border"></div>
-      <button onclick="logout()" class="w-10 h-10 rounded-lg border border-slate-200 text-slate-500 hover:text-rose-500 hover:border-rose-200 flex items-center justify-center" id="logout-btn"><i data-lucide="log-out" class="w-4 h-4"></i></button>
-    </div>
-  </header>
-  <div class="flex">
-    <aside id="sidebar" class="w-64 shrink-0 bg-white border-r border-slate-200 min-h-[calc(100vh-64px)] p-3 hidden lg:block">
-      <nav id="nav" class="space-y-1"></nav>
-    </aside>
-    <main id="main" class="flex-1 p-4 lg:p-8 max-w-[1200px] custom-scroll"></main>
-  </div>
-</div>
+  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
 
-<div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 z-[60] px-5 py-3 rounded-xl bg-slate-900 text-white text-sm font-medium shadow-xl opacity-0 -translate-y-3 transition-all pointer-events-none"></div>
+  <script type="text/babel" data-type="module" data-presets="react">
+    import { useEffect, useMemo, useState } from "react";
+    import { createRoot } from "react-dom/client";
+    import { motion, useSpring, AnimatePresence } from "framer-motion";
 
-<script>
-/* ============================================================
-   i18n RU / KZ
-   ============================================================ */
-let lang = localStorage.getItem('cp_lang') || 'RU';
-const I18N = {
-  RU:{
-    demo_badge:'ДЕМО · мок-данные', login_title:'Вход по телефону',
-    login_sub:'Регистрация и вход по номеру телефона с OTP-кодом (в шаблоне код любой).',
-    phone_label:'Номер телефона', get_code:'Получить код', otp_label:'Код из SMS',
-    otp_hint:'Демо: введите любые 4 цифры.', enter:'Войти',
-    quick:'Быстрый вход по роли (демо)',
-    rbac_note:'Роли демонстрируют RBAC: например, Администратор не видит payroll, ФОТ и аналитику, а Директор и Caspian Tech Partner — всё.',
-    otp_sent:'OTP-код отправлен (демо: любые 4 цифры)', enter4:'Введите 4 цифры',
-    welcome:'Добро пожаловать', logout_done:'Вы вышли из системы',
-    denied_t:'Доступ запрещён', denied_s:'Ваша роль ({role}) не имеет прав на этот раздел. На сервере это enforced через Postgres RLS.',
-    overview:'Обзор по вашей роли',
-    nav:{dashboard:'Дашборд',timeclock:'Моя смена',timesheet:'Табель / часы',checklist:'Чек-лист смены',tasks:'Задачи',leaves:'Заявки',team:'Команда',employees:'Сотрудники',payslip:'Расчётный лист',payroll:'Payroll',analytics:'Аналитика',executive:'Executive-дашборд',admin:'Ведение системы'},
-    roles:{employee:'Сотрудник',manager:'Менеджер',hr:'HR',accountant:'Бухгалтер',admin:'Администратор',director:'Директор',partner:'Caspian Tech Partner'},
-    kShiftStatus:'Статус смены', onShift:'🟢 На смене', offShift:'⚪ Не на смене',
-    kHoursMonth:'Часов за месяц', kSalaryNet:'Зарплата (нетто)', kFotNet:'ФОТ за месяц (нетто)',
-    kBookingsMonth:'Записей за месяц', kEmployees:'Сотрудников',
-    adminBoxT:'Роль «Администратор» — ведение системы',
-    adminBoxS:'По политике безопасности у вас НЕТ доступа к payroll, ФОТ, аналитике, прибыли, экспортам и executive-дашбордам. Эти разделы скрыты и закрыты на уровне БД (RLS).',
-    shift_t:'Моя смена', shift_s:'Старт/стоп смены и учёт рабочего времени',
-    shift_started_at:'Смена начата в', shift_not:'Смена не начата',
-    start_shift:'▶ Начать смену', stop_shift:'■ Завершить смену',
-    today:'Сегодня', week:'За неделю', overtime:'Переработка',
-    shift_started:'Смена начата', shift_ended:'Смена завершена',
-    ts_t:'Табель и часы', ts_s_own:'Учёт отработанного времени', ts_s_all:'Сводный табель по сотрудникам',
-    th_date:'Дата', th_hours:'Часы', th_ot:'Переработка', th_status:'Статус', verified:'✓ подтверждено',
-    chk_t:'Чек-лист смены', chk_s:'Стандартные процедуры открытия и закрытия смены',
-    chk_done:'выполнено', chk_verify:'Подтвердить (manager)', chk_verified:'Чек-лист подтверждён менеджером',
-    tasks_t:'Задачи', tasks_s:'Задачи смены и статус выполнения',
-    st_todo:'К выполнению', st_doing:'В работе', st_done:'Готово', task_adv:'Передвинуть статус', task_verify:'Verify',
-    leaves_t:'Заявки', leaves_s:'Отпуска, больничные, командировки — с цифровым согласованием',
-    new_leave:'Новая заявка', th_emp:'Сотрудник', th_type:'Тип', th_period:'Период',
-    lv_vac:'Отпуск', lv_sick:'Больничный', lv_trip:'Командировка',
-    st_pending:'⏳ На согласовании', st_approved:'✓ Согласовано', st_rejected:'✗ Отклонено',
-    approve:'Согласовать', leave_created:'Заявка создана и отправлена на согласование', leave_approved:'Заявка согласована',
-    team_t:'Команда', team_s:'Подтверждение часов сотрудников (manager verification)',
-    th_role:'Роль', th_hpm:'Часов/мес', th_action:'Действие', verify_hours:'Verify часы', hours_verified:'Часы подтверждены:',
-    emp_t:'Сотрудники', emp_s:'HR-картотека', th_rate:'Ставка', hidden:'••• скрыто',
-    ps_t:'Расчётный лист', ps_s:'Май 2026', ps_hours:'Отработано часов', ps_rate:'Ставка',
-    ps_gross:'Начислено (gross)', ps_tax:'Налоги (10%)', ps_net:'К выплате (net)',
-    pr_t:'Payroll', pr_s:'Расчёт заработной платы · Май 2026', pr_fot_g:'ФОТ начислено', pr_fot_n:'ФОТ к выплате',
-    an_t:'Аналитика и отчёты', an_s:'Сводка по клинике',
-    an_services:'Популярные услуги', an_byemp:'Часы по сотрудникам',
-    ex_t:'Executive-дашборд', ex_s:'Стратегические показатели — только Директор и Tech Partner',
-    revenue:'Выручка/мес', profit:'Прибыль', load:'Загрузка кресел', retention:'Удержание', export:'Экспорт CSV',
-    exported:'Отчёт выгружен (CSV)',
-    admin_t:'Ведение системы', admin_s:'Записи пациентов, расписание, учётные записи',
-    today_bookings:'Сегодняшние записи', role_bounds:'Границы роли',
-    admin_bounds:'Администратор ведёт операционную работу: записи, расписание, карточки. Payroll, ФОТ, аналитика, прибыль, экспорты и executive-дашборды недоступны — закрыто на уровне БД (RLS), не только в интерфейсе.',
-    active:'активна', svc:{hygiene:'Гигиена',implant:'Имплантация',whitening:'Отбеливание',ortho:'Ортодонтия',consult:'Консультация'},
-  },
-  KZ:{
-    demo_badge:'ДЕМО · мок-деректер', login_title:'Телефон арқылы кіру',
-    login_sub:'Телефон нөмірі мен OTP-код арқылы тіркелу және кіру (шаблонда кез келген код).',
-    phone_label:'Телефон нөмірі', get_code:'Код алу', otp_label:'SMS коды',
-    otp_hint:'Демо: кез келген 4 санды енгізіңіз.', enter:'Кіру',
-    quick:'Рөл бойынша жылдам кіру (демо)',
-    rbac_note:'Рөлдер RBAC-ты көрсетеді: мысалы, Әкімші payroll, ЕТҚ мен аналитиканы көрмейді, ал Директор мен Caspian Tech Partner — бәрін көреді.',
-    otp_sent:'OTP-код жіберілді (демо: кез келген 4 сан)', enter4:'4 сан енгізіңіз',
-    welcome:'Қош келдіңіз', logout_done:'Жүйеден шықтыңыз',
-    denied_t:'Рұқсат жоқ', denied_s:'Сіздің рөліңіздің ({role}) бұл бөлімге құқығы жоқ. Серверде бұл Postgres RLS арқылы қамтамасыз етілген.',
-    overview:'Рөліңіз бойынша шолу',
-    nav:{dashboard:'Дашборд',timeclock:'Менің ауысымым',timesheet:'Табель / сағат',checklist:'Ауысым чек-парағы',tasks:'Тапсырмалар',leaves:'Өтінімдер',team:'Команда',employees:'Қызметкерлер',payslip:'Есеп парағы',payroll:'Payroll',analytics:'Аналитика',executive:'Executive-дашборд',admin:'Жүйені жүргізу'},
-    roles:{employee:'Қызметкер',manager:'Менеджер',hr:'HR',accountant:'Бухгалтер',admin:'Әкімші',director:'Директор',partner:'Caspian Tech Partner'},
-    kShiftStatus:'Ауысым күйі', onShift:'🟢 Ауысымда', offShift:'⚪ Ауысымда емес',
-    kHoursMonth:'Айдағы сағат', kSalaryNet:'Жалақы (таза)', kFotNet:'Айдағы ЕТҚ (таза)',
-    kBookingsMonth:'Айдағы жазбалар', kEmployees:'Қызметкерлер',
-    adminBoxT:'«Әкімші» рөлі — жүйені жүргізу',
-    adminBoxS:'Қауіпсіздік саясаты бойынша сізде payroll, ЕТҚ, аналитика, пайда, экспорт пен executive-дашбордтарға қол жеткізу ЖОҚ. Бұл бөлімдер жасырылған және ДҚ деңгейінде (RLS) жабылған.',
-    shift_t:'Менің ауысымым', shift_s:'Ауысымды бастау/аяқтау және жұмыс уақытын есепке алу',
-    shift_started_at:'Ауысым басталды:', shift_not:'Ауысым басталмаған',
-    start_shift:'▶ Ауысымды бастау', stop_shift:'■ Ауысымды аяқтау',
-    today:'Бүгін', week:'Апта', overtime:'Артық жұмыс',
-    shift_started:'Ауысым басталды', shift_ended:'Ауысым аяқталды',
-    ts_t:'Табель және сағаттар', ts_s_own:'Жұмыс уақытын есепке алу', ts_s_all:'Қызметкерлер бойынша жиынтық табель',
-    th_date:'Күні', th_hours:'Сағат', th_ot:'Артық жұмыс', th_status:'Күйі', verified:'✓ расталды',
-    chk_t:'Ауысым чек-парағы', chk_s:'Ауысымды ашу мен жабудың стандартты рәсімдері',
-    chk_done:'орындалды', chk_verify:'Растау (manager)', chk_verified:'Чек-парақ менеджермен расталды',
-    tasks_t:'Тапсырмалар', tasks_s:'Ауысым тапсырмалары мен орындалу күйі',
-    st_todo:'Орындау керек', st_doing:'Жұмыста', st_done:'Дайын', task_adv:'Күйді жылжыту', task_verify:'Verify',
-    leaves_t:'Өтінімдер', leaves_s:'Демалыс, ауру парағы, іссапар — цифрлық келісіммен',
-    new_leave:'Жаңа өтінім', th_emp:'Қызметкер', th_type:'Түрі', th_period:'Кезең',
-    lv_vac:'Демалыс', lv_sick:'Ауру парағы', lv_trip:'Іссапар',
-    st_pending:'⏳ Келісімде', st_approved:'✓ Келісілді', st_rejected:'✗ Қабылданбады',
-    approve:'Келісу', leave_created:'Өтінім құрылып, келісімге жіберілді', leave_approved:'Өтінім келісілді',
-    team_t:'Команда', team_s:'Қызметкерлер сағаттарын растау (manager verification)',
-    th_role:'Рөл', th_hpm:'Сағат/ай', th_action:'Әрекет', verify_hours:'Сағатты verify', hours_verified:'Сағаттар расталды:',
-    emp_t:'Қызметкерлер', emp_s:'HR-картотека', th_rate:'Ставка', hidden:'••• жасырын',
-    ps_t:'Есеп парағы', ps_s:'Мамыр 2026', ps_hours:'Жұмыс істелген сағат', ps_rate:'Ставка',
-    ps_gross:'Есептелді (gross)', ps_tax:'Салық (10%)', ps_net:'Төленеді (net)',
-    pr_t:'Payroll', pr_s:'Жалақыны есептеу · Мамыр 2026', pr_fot_g:'ЕТҚ есептелді', pr_fot_n:'ЕТҚ төленеді',
-    an_t:'Аналитика мен есептер', an_s:'Клиника бойынша жиынтық',
-    an_services:'Танымал қызметтер', an_byemp:'Қызметкерлер бойынша сағат',
-    ex_t:'Executive-дашборд', ex_s:'Стратегиялық көрсеткіштер — тек Директор мен Tech Partner',
-    revenue:'Айлық түсім', profit:'Пайда', load:'Кресло жүктемесі', retention:'Ұстап қалу', export:'CSV экспорт',
-    exported:'Есеп жүктелді (CSV)',
-    admin_t:'Жүйені жүргізу', admin_s:'Пациент жазбалары, кесте, есептік жазбалар',
-    today_bookings:'Бүгінгі жазбалар', role_bounds:'Рөл шекаралары',
-    admin_bounds:'Әкімші операциялық жұмысты жүргізеді: жазбалар, кесте, карточкалар. Payroll, ЕТҚ, аналитика, пайда, экспорт пен executive-дашбордтар қолжетімсіз — ДҚ деңгейінде (RLS) жабылған.',
-    active:'белсенді', svc:{hygiene:'Гигиена',implant:'Имплантация',whitening:'Ағарту',ortho:'Ортодонтия',consult:'Кеңес'},
-  }
-};
-function t(key){ return I18N[lang][key] ?? key; }
-function tn(id){ return I18N[lang].nav[id] ?? id; }
+    /* ── helpers ── */
+    const onlyDigits = (s) => String(s).replace(/[^\d]/g, "");
 
-/* ============================================================
-   RBAC — зеркало packages/permissions
-   ============================================================ */
-const ROLE_COLORS = {
-  employee:'bg-slate-100 text-slate-600 border-slate-200', manager:'bg-blue-50 text-blue-700 border-blue-200',
-  hr:'bg-teal-50 text-teal-700 border-teal-200', accountant:'bg-amber-50 text-amber-700 border-amber-200',
-  admin:'bg-violet-50 text-violet-700 border-violet-200', director:'bg-cyan-50 text-cyan-700 border-cyan-200',
-  partner:'bg-slate-900 text-white border-slate-900'
-};
-const FULL_ACCESS = ['director','partner'];
-const EXEC_RESTRICTED = ['analytics','payroll_totals','exports','executive_dashboard'];
-const MATRIX = {
-  employee:   ['timeclock','timesheet:own','checklist','tasks:own','payslip:own','leaves:own'],
-  manager:    ['timeclock','timesheet:team','checklist','tasks','leaves:approve','team','employees:read'],
-  hr:         ['employees','leaves:approve','timesheet:all','payslip:all','tasks'],
-  accountant: ['payroll','payslip:all','timesheet:all','employees:read'],
-  admin:      ['bookings','employees:read','leaves:read','timesheet:all'],
-  director:   ['*'], partner:['*'],
-};
-const isFull = r => FULL_ACCESS.includes(r);
-function can(resource){
-  const role = session().role;
-  if(isFull(role)) return true;
-  if(EXEC_RESTRICTED.includes(resource)) return false;
-  const g = MATRIX[role]||[];
-  return g.includes(resource) || g.some(x=>x.split(':')[0]===resource);
-}
-const canApprove = () => isFull(session().role) || ['manager','hr'].includes(session().role);
-const canVerify  = () => isFull(session().role) || session().role==='manager';
+    function AnimatedNumber({ value, decimals = 0, locale = "ru-RU" }) {
+      const spring = useSpring(value, { stiffness: 140, damping: 22, mass: 0.7 });
+      const [shown, setShown] = useState(value);
+      useEffect(() => { spring.set(Number.isFinite(value) ? value : 0); }, [spring, value]);
+      useEffect(() => spring.on("change", (v) => setShown(v)), [spring]);
+      const text = Number.isFinite(value)
+        ? new Intl.NumberFormat(locale, { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(shown)
+        : "∞";
+      return <span className="tabular-nums">{text}</span>;
+    }
 
-/* ============================================================
-   STORAGE / SESSION
-   ============================================================ */
-const LS={session:'cp_session',shift:'cp_shift',att:'cp_att',leaves:'cp_leaves',chk:'cp_chk',tasks:'cp_tasks'};
-const get=(k,d)=>{ try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v;}catch(e){return d;} };
-const set=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
-const session=()=>get(LS.session,null);
-const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const KZT=n=>Number(n).toLocaleString('ru-RU')+' ₸';
+    function CurrencyField({ id, label, value, onChange, currency, fmt }) {
+      const display = value > 0 ? fmt.format(value) : "";
+      return (
+        <label htmlFor={id} className="block">
+          <span className="mb-2 block text-[12px] font-semibold uppercase tracking-[0.12em] text-slate-400">{label}</span>
+          <div className="relative">
+            <input
+              id={id} inputMode="numeric" autoComplete="off" placeholder="0"
+              value={display}
+              onChange={(e) => onChange(Number(onlyDigits(e.target.value)))}
+              className="w-full rounded-2xl border border-slate-200 bg-white/80 px-4 py-3.5 pr-12 text-[17px] font-semibold text-slate-900 shadow-sm transition-all placeholder:text-slate-300 focus:border-cyan-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-cyan-500/10"
+            />
+            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[15px] font-medium text-slate-400">{currency}</span>
+          </div>
+        </label>
+      );
+    }
 
-const RATE=3500;
-const TEAM=[
-  {name:'Иван Сотрудник',role:'employee',hours:168,rate:3500},
-  {name:'Мария Гигиенист',role:'employee',hours:152,rate:3800},
-  {name:'Данияр Ассистент',role:'employee',hours:174,rate:3200},
-  {name:'Сауле Админ',role:'admin',hours:160,rate:4000},
-];
-const SERVICES=[['hygiene',42],['implant',31],['whitening',27],['ortho',19],['consult',15]];
+    function CaspianDentosROI({
+      currency = "₸", locale = "ru-RU",
+      defaultCheck = 85000, defaultPackage = 2400000, defaultPerMonth = 12,
+    }) {
+      const fmt = useMemo(() => new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }), [locale]);
+      const [avgCheck, setAvgCheck] = useState(defaultCheck);
+      const [pkg, setPkg] = useState(defaultPackage);
+      const [perMonth, setPerMonth] = useState(defaultPerMonth);
 
-/* ============================================================
-   LANG
-   ============================================================ */
-function applyStaticTexts(){
-  document.documentElement.lang = lang.toLowerCase();
-  document.getElementById('demo-badge').textContent = t('demo_badge');
-  document.getElementById('lang-btn-login').textContent = lang;
-  const set1=(id,v)=>{const e=document.getElementById(id); if(e)e.textContent=v;};
-  set1('t-login-title',t('login_title')); set1('t-login-sub',t('login_sub'));
-  set1('t-phone-label',t('phone_label')); set1('t-get-code',t('get_code'));
-  set1('t-otp-label',t('otp_label')); set1('t-otp-hint',t('otp_hint')); set1('t-enter',t('enter'));
-  set1('t-quick',t('quick')); set1('t-rbac-note',t('rbac_note'));
-  const lb=document.getElementById('lang-btn'); if(lb) lb.textContent=lang;
-  renderRoleGrid();
-}
-function toggleLang(){ lang = lang==='RU'?'KZ':'RU'; localStorage.setItem('cp_lang',lang); applyStaticTexts();
-  if(session() && !document.getElementById('app').classList.contains('hidden')){ buildNav(); navigate(current); } }
+      const monthlyRevenue = avgCheck * perMonth;
+      const months = monthlyRevenue > 0 ? pkg / monthlyRevenue : Infinity;
+      const ready = avgCheck > 0 && pkg > 0;
+      const years = Math.floor(months / 12);
+      const restMonths = months - years * 12;
 
-/* ============================================================
-   AUTH
-   ============================================================ */
-function renderRoleGrid(){
-  document.getElementById('role-grid').innerHTML = Object.keys(I18N[lang].roles).map(r=>
-    `<button onclick="loginAs('${r}')" class="px-3 py-2.5 rounded-xl border text-sm font-medium hover:border-cyan-400 transition-all text-left ${ROLE_COLORS[r]}">${t('roles')[r]||I18N[lang].roles[r]}</button>`
-  ).join('');
-}
-function sendOtp(){ document.getElementById('step-phone').classList.add('hidden'); document.getElementById('step-otp').classList.remove('hidden'); toast(t('otp_sent')); }
-function verifyOtp(){ if(document.getElementById('otp').value.trim().length<4){ toast(t('enter4')); return; } loginAs('employee'); }
-function loginAs(role){
-  set(LS.session,{role, phone:document.getElementById('phone').value});
-  document.getElementById('login').classList.add('hidden');
-  document.getElementById('app').classList.remove('hidden');
-  buildNav(); navigate(defaultView()); lucide.createIcons();
-}
-function logout(){ localStorage.removeItem(LS.session); location.reload(); }
-const roleLabel = r => I18N[lang].roles[r];
+      const verdict = !ready ? null
+        : months <= 6  ? { tone: "emerald", text: "Стремительная окупаемость" }
+        : months <= 12 ? { tone: "cyan",    text: "Здоровая динамика" }
+        : months <= 24 ? { tone: "amber",   text: "Умеренный горизонт" }
+        :                { tone: "slate",   text: "Долгий горизонт" };
 
-/* ============================================================
-   NAV
-   ============================================================ */
-const NAV=[
-  {id:'dashboard',icon:'layout-dashboard',res:null},
-  {id:'timeclock',icon:'timer',res:'timeclock'},
-  {id:'timesheet',icon:'clock',res:'timesheet'},
-  {id:'checklist',icon:'list-checks',res:'checklist'},
-  {id:'tasks',icon:'check-square',res:'tasks'},
-  {id:'leaves',icon:'plane',res:'leaves'},
-  {id:'team',icon:'users',res:'team'},
-  {id:'employees',icon:'contact',res:'employees'},
-  {id:'payslip',icon:'receipt',res:'payslip'},
-  {id:'payroll',icon:'banknote',res:'payroll'},
-  {id:'analytics',icon:'bar-chart-3',res:'analytics'},
-  {id:'executive',icon:'gem',res:'executive_dashboard'},
-  {id:'admin',icon:'settings',res:'bookings'},
-];
-const visibleNav=()=>NAV.filter(n=>n.res===null||can(n.res));
-const defaultView=()=>visibleNav()[0]?.id||'dashboard';
-function buildNav(){
-  const s=session();
-  document.getElementById('role-chip').className='px-3 py-1.5 rounded-lg text-xs font-semibold border '+ROLE_COLORS[s.role];
-  document.getElementById('role-chip').textContent=roleLabel(s.role);
-  document.getElementById('lang-btn').textContent=lang;
-  document.getElementById('nav').innerHTML=visibleNav().map(n=>
-    `<button data-nav="${n.id}" onclick="navigate('${n.id}')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600 hover:bg-slate-50 transition-all"><i data-lucide="${n.icon}" class="w-4 h-4"></i>${tn(n.id)}</button>`).join('');
-  lucide.createIcons();
-}
-let current='dashboard';
-function navigate(id){
-  const item=NAV.find(n=>n.id===id);
-  if(item&&item.res&&!can(item.res)){ renderDenied(); return; }
-  current=id;
-  document.querySelectorAll('[data-nav]').forEach(b=>b.classList.toggle('nav-active',b.getAttribute('data-nav')===id));
-  ({dashboard:renderDashboard,timeclock:renderTimeclock,timesheet:renderTimesheet,checklist:renderChecklist,
-    tasks:renderTasks,leaves:renderLeaves,team:renderTeam,employees:renderEmployees,payslip:renderPayslip,
-    payroll:renderPayroll,analytics:renderAnalytics,executive:renderExecutive,admin:renderAdmin}[id]||renderDashboard)();
-  lucide.createIcons();
-}
-function setMain(h){ document.getElementById('main').innerHTML=`<div class="fade-in">${h}</div>`; }
-function H(t1,sub){ return `<div class="mb-6"><h1 class="text-2xl font-bold tracking-tight text-slate-900">${t1}</h1>${sub?`<p class="text-slate-500 text-sm mt-1">${sub}</p>`:''}</div>`; }
-function card(i,c=''){ return `<div class="bg-white rounded-2xl border border-slate-200 card p-6 ${c}">${i}</div>`; }
-function kpi(l,v,ic,col){ return card(`<div class="flex items-center justify-between"><span class="text-xs text-slate-400 font-medium">${l}</span><i data-lucide="${ic}" class="w-4 h-4 ${col}"></i></div><p class="mt-2 text-2xl font-extrabold text-slate-900">${v}</p>`); }
-function renderDenied(){ setMain(card(`<div class="text-center py-10"><i data-lucide="shield-x" class="w-10 h-10 text-rose-400 mx-auto"></i><p class="mt-3 font-semibold text-slate-800">${t('denied_t')}</p><p class="text-sm text-slate-500 mt-1">${t('denied_s').replace('{role}',roleLabel(session().role))}</p></div>`)); lucide.createIcons(); }
+      const toneMap = {
+        emerald: "bg-emerald-50 text-emerald-600 ring-emerald-500/20",
+        cyan:    "bg-cyan-50 text-cyan-600 ring-cyan-500/20",
+        amber:   "bg-amber-50 text-amber-600 ring-amber-500/20",
+        slate:   "bg-slate-100 text-slate-500 ring-slate-400/20",
+      };
+      const sliderPct = ((perMonth - 1) / 99) * 100;
 
-/* ============================================================
-   VIEWS
-   ============================================================ */
-function renderDashboard(){
-  const s=session(), sh=get(LS.shift,null), c=[];
-  c.push(kpi(t('kShiftStatus'), sh?t('onShift'):t('offShift'),'timer','text-cyan-600'));
-  if(can('timesheet')) c.push(kpi(t('kHoursMonth'),'168 ч','clock','text-blue-500'));
-  if(can('payslip')||can('payroll')) c.push(kpi(can('payroll')?t('kFotNet'):t('kSalaryNet'), can('payroll')?KZT(7650000):KZT(168*RATE),'banknote','text-emerald-500'));
-  if(can('analytics')) c.push(kpi(t('kBookingsMonth'),'134','calendar-check','text-violet-500'));
-  if(can('employees')||can('team')) c.push(kpi(t('kEmployees'),TEAM.length,'users','text-teal-500'));
-  let box='';
-  if(s.role==='admin') box=card(`<div class="flex items-start gap-3"><i data-lucide="shield" class="w-5 h-5 text-violet-500 mt-0.5"></i><div><p class="font-semibold text-slate-800 text-sm">${t('adminBoxT')}</p><p class="text-sm text-slate-500 mt-1">${t('adminBoxS')}</p></div></div>`,'mt-6 border-violet-200 bg-violet-50/40');
-  setMain(H(t('welcome')+', '+roleLabel(s.role), t('overview'))+`<div class="grid grid-cols-2 lg:grid-cols-4 gap-4">${c.join('')}</div>`+box);
-}
-function renderTimeclock(){
-  const sh=get(LS.shift,null), el=sh?Math.floor((Date.now()-sh.start)/1000):0;
-  const f=n=>String(n).padStart(2,'0'), hh=f(Math.floor(el/3600)),mm=f(Math.floor(el%3600/60)),ss=f(el%60);
-  setMain(H(t('shift_t'),t('shift_s'))+card(`<div class="text-center py-6">
-    <div class="text-5xl font-extrabold font-mono tracking-tight ${sh?'text-cyan-600':'text-slate-300'}" id="st">${hh}:${mm}:${ss}</div>
-    <p class="text-sm text-slate-500 mt-2">${sh?(t('shift_started_at')+' '+new Date(sh.start).toLocaleTimeString('ru-RU')):t('shift_not')}</p>
-    <button onclick="toggleShift()" class="mt-6 px-8 py-4 rounded-2xl font-bold text-white transition-all ${sh?'bg-rose-500 hover:bg-rose-600':'bg-cyan-600 hover:bg-cyan-700'}">${sh?t('stop_shift'):t('start_shift')}</button>
-    <div class="mt-6 grid grid-cols-3 gap-3 max-w-md mx-auto text-center">
-      <div class="rounded-xl bg-slate-50 p-3"><div class="text-xs text-slate-400">${t('today')}</div><div class="font-bold text-slate-800">${sh?(hh+'ч '+mm+'м'):'0ч 00м'}</div></div>
-      <div class="rounded-xl bg-slate-50 p-3"><div class="text-xs text-slate-400">${t('week')}</div><div class="font-bold text-slate-800">38ч 20м</div></div>
-      <div class="rounded-xl bg-amber-50 p-3"><div class="text-xs text-amber-600">${t('overtime')}</div><div class="font-bold text-amber-700">2ч 15м</div></div>
-    </div></div>`));
-  if(sh){ clearInterval(window._st); window._st=setInterval(()=>{const e=document.getElementById('st'); if(!e){clearInterval(window._st);return;} const x=Math.floor((Date.now()-sh.start)/1000); e.textContent=[Math.floor(x/3600),Math.floor(x%3600/60),x%60].map(f).join(':');},1000); }
-}
-function toggleShift(){
-  const sh=get(LS.shift,null);
-  if(sh){ const m=Math.round((Date.now()-sh.start)/60000); const l=get(LS.att,[]); l.unshift({date:new Date().toISOString().slice(0,10),mins:m,ot:Math.max(0,m-480)}); set(LS.att,l); localStorage.removeItem(LS.shift); toast(t('shift_ended')+': '+(m/60).toFixed(1)+' ч'); }
-  else { set(LS.shift,{start:Date.now()}); toast(t('shift_started')); }
-  renderTimeclock(); lucide.createIcons();
-}
-function renderTimesheet(){
-  const log=get(LS.att,[]); const rows=(log.length?log:[{date:'2026-05-28',mins:505,ot:25},{date:'2026-05-27',mins:480,ot:0},{date:'2026-05-26',mins:530,ot:50},{date:'2026-05-25',mins:465,ot:0}])
-    .map(r=>`<tr class="border-t border-slate-100"><td class="px-4 py-3">${esc(r.date)}</td><td class="px-4 py-3 font-medium">${(r.mins/60).toFixed(1)} ч</td><td class="px-4 py-3 ${r.ot?'text-amber-600 font-semibold':'text-slate-400'}">${r.ot?((r.ot/60).toFixed(1)+' ч'):'—'}</td><td class="px-4 py-3"><span class="text-emerald-600 text-xs font-medium">${t('verified')}</span></td></tr>`).join('');
-  const own = can('timesheet') && !can('payroll') && !['hr','admin'].includes(session().role);
-  setMain(H(t('ts_t'), own?t('ts_s_own'):t('ts_s_all'))+card(tbl([t('th_date'),t('th_hours'),t('th_ot'),t('th_status')],rows)));
-}
-function tbl(heads,rows){ return `<div class="overflow-x-auto"><table class="w-full text-sm"><thead class="text-slate-400 text-xs uppercase"><tr>${heads.map(h=>`<th class="px-4 py-2 text-left">${h}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`; }
+      return (
+        <div className="w-full max-w-md rounded-[28px] border border-slate-200/70 bg-white/90 p-6 shadow-[0_1px_3px_rgba(15,23,42,.04),0_30px_60px_-30px_rgba(15,23,42,.18)] backdrop-blur sm:p-8">
+          <div className="mb-7 flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-500/25">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 3v18h18" /><path d="m7 14 4-4 3 3 5-6" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-[17px] font-bold leading-tight text-slate-900">Окупаемость инвестиций</h2>
+              <p className="text-[12px] text-slate-400">Расчёт на лету · без формул вручную</p>
+            </div>
+          </div>
 
-function renderChecklist(){
-  const items=get(LS.chk,[
-    {id:1,txt:'Стерилизация инструментов',done:true},{id:2,txt:'Проверка оборудования и кресла',done:true},
-    {id:3,txt:'Подготовка расходных материалов',done:false},{id:4,txt:'Сверка расписания на день',done:false},
-    {id:5,txt:'Уборка и дезинфекция кабинета (закрытие)',done:false},
-  ]);
-  const done=items.filter(i=>i.done).length, pct=Math.round(done/items.length*100);
-  const rows=items.map(i=>`<div class="flex items-center gap-3 py-2.5 border-b border-slate-100 last:border-0">
-    <input type="checkbox" class="chk hidden" id="ci${i.id}" ${i.done?'checked':''} onchange="toggleChk(${i.id})">
-    <label for="ci${i.id}" class="flex items-center gap-3 cursor-pointer flex-1"><span class="box w-5 h-5 rounded-md border-2 border-slate-300 flex items-center justify-center transition-all"><i data-lucide="check" class="w-3.5 h-3.5 text-white opacity-0"></i></span><span class="text-sm ${i.done?'text-slate-400 line-through':'text-slate-700'}">${esc(i.txt)}</span></label></div>`).join('');
-  setMain(H(t('chk_t'),t('chk_s'))+card(`<div class="flex items-center justify-between mb-4"><span class="text-sm font-semibold text-slate-700">${done}/${items.length} ${t('chk_done')}</span><span class="text-sm font-bold text-cyan-600">${pct}%</span></div><div class="h-2 bg-slate-100 rounded-full overflow-hidden mb-5"><div class="bar h-full bg-cyan-500 rounded-full" style="width:${pct}%"></div></div>${rows}${canVerify()?`<button onclick="toast(t('chk_verified'))" class="mt-5 w-full py-2.5 rounded-xl bg-cyan-50 text-cyan-700 text-sm font-semibold hover:bg-cyan-100">${t('chk_verify')}</button>`:''}`));
-}
-function toggleChk(id){ const it=get(LS.chk,null)|| [{id:1,txt:'Стерилизация инструментов',done:true},{id:2,txt:'Проверка оборудования и кресла',done:true},{id:3,txt:'Подготовка расходных материалов',done:false},{id:4,txt:'Сверка расписания на день',done:false},{id:5,txt:'Уборка и дезинфекция кабинета (закрытие)',done:false}]; const x=it.find(i=>i.id===id); if(x)x.done=!x.done; set(LS.chk,it); renderChecklist(); lucide.createIcons(); }
+          <div className="space-y-5">
+            <CurrencyField id="cdt-check" label="Средний чек в клинике" value={avgCheck} onChange={setAvgCheck} currency={currency} fmt={fmt} />
+            <CurrencyField id="cdt-package" label="Сумма пакета / инвестиции" value={pkg} onChange={setPkg} currency={currency} fmt={fmt} />
 
-function renderTasks(){
-  const tasks=get(LS.tasks,[
-    {id:1,txt:'Принять пациента 14:00 (имплантация)',status:'doing'},
-    {id:2,txt:'Заказать расходники у поставщика',status:'todo'},
-    {id:3,txt:'Заполнить карту пациента №134',status:'done'},
-    {id:4,txt:'Подтвердить запись на завтра',status:'todo'},
-  ]);
-  const stMeta={todo:['st_todo','bg-slate-100 text-slate-600'],doing:['st_doing','bg-amber-50 text-amber-700'],done:['st_done','bg-emerald-50 text-emerald-700']};
-  const rows=tasks.map(tk=>{const [lk,cl]=stMeta[tk.status]; return `<div class="flex items-center justify-between gap-3 py-3 border-b border-slate-100 last:border-0">
-    <span class="text-sm ${tk.status==='done'?'text-slate-400 line-through':'text-slate-700'}">${esc(tk.txt)}</span>
-    <div class="flex items-center gap-2 shrink-0"><span class="px-2.5 py-1 rounded-lg text-xs font-medium ${cl}">${t(lk)}</span>
-    ${tk.status!=='done'?`<button onclick="advTask(${tk.id})" title="${t('task_adv')}" class="w-8 h-8 rounded-lg border border-slate-200 text-slate-500 hover:text-cyan-600 hover:border-cyan-300 flex items-center justify-center"><i data-lucide="arrow-right" class="w-4 h-4"></i></button>`:(canVerify()?`<span class="text-emerald-600 text-xs font-semibold">${t('task_verify')} ✓</span>`:'')}</div></div>`;}).join('');
-  setMain(H(t('tasks_t'),t('tasks_s'))+card(rows));
-}
-function advTask(id){ const ts=get(LS.tasks,null)||[{id:1,txt:'Принять пациента 14:00 (имплантация)',status:'doing'},{id:2,txt:'Заказать расходники у поставщика',status:'todo'},{id:3,txt:'Заполнить карту пациента №134',status:'done'},{id:4,txt:'Подтвердить запись на завтра',status:'todo'}]; const x=ts.find(i=>i.id===id); if(x)x.status=x.status==='todo'?'doing':'done'; set(LS.tasks,ts); renderTasks(); lucide.createIcons(); }
+            <div>
+              <div className="mb-2 flex items-baseline justify-between">
+                <span className="text-[12px] font-semibold uppercase tracking-[0.12em] text-slate-400">Процедур в месяц</span>
+                <span className="text-[15px] font-bold tabular-nums text-cyan-600">{perMonth}</span>
+              </div>
+              <input type="range" min={1} max={100} value={perMonth}
+                onChange={(e) => setPerMonth(Number(e.target.value))}
+                className="cdt-slider w-full"
+                style={{ background: `linear-gradient(to right, #06b6d4 ${sliderPct}%, #e2e8f0 ${sliderPct}%)` }} />
+              <div className="mt-1 flex justify-between text-[11px] text-slate-300"><span>1</span><span>100</span></div>
+            </div>
+          </div>
 
-function renderLeaves(){
-  const leaves=get(LS.leaves,[
-    {id:1,who:'Иван Сотрудник',type:'vac',from:'2026-06-10',to:'2026-06-20',status:'pending'},
-    {id:2,who:'Мария Гигиенист',type:'sick',from:'2026-05-29',to:'2026-05-31',status:'approved'},
-    {id:3,who:'Данияр Ассистент',type:'trip',from:'2026-06-02',to:'2026-06-04',status:'pending'},
-  ]);
-  const typeL={vac:'lv_vac',sick:'lv_sick',trip:'lv_trip'}, stL={pending:'st_pending',approved:'st_approved',rejected:'st_rejected'};
-  const ap=canApprove();
-  const rows=leaves.map(l=>`<tr class="border-t border-slate-100"><td class="px-4 py-3 font-medium">${esc(l.who)}</td><td class="px-4 py-3">${t(typeL[l.type])}</td><td class="px-4 py-3 text-slate-500">${l.from} → ${l.to}</td><td class="px-4 py-3 text-xs font-semibold ${l.status==='approved'?'text-emerald-600':l.status==='rejected'?'text-rose-500':'text-amber-600'}">${t(stL[l.status])}</td><td class="px-4 py-3 text-right">${(ap&&l.status==='pending')?`<button onclick="approveLeave(${l.id})" class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-medium hover:bg-emerald-100">${t('approve')}</button>`:'<span class="text-slate-300 text-xs">—</span>'}</td></tr>`).join('');
-  setMain(H(t('leaves_t'),t('leaves_s'))+`<div class="flex justify-end mb-3"><button onclick="newLeave()" class="px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold flex items-center gap-2"><i data-lucide="plus" class="w-4 h-4"></i>${t('new_leave')}</button></div>`+card(tbl([t('th_emp'),t('th_type'),t('th_period'),t('th_status'),''],rows)));
-}
-function newLeave(){ const l=get(LS.leaves,[]); l.unshift({id:Date.now(),who:roleLabel(session().role),type:'vac',from:'2026-06-15',to:'2026-06-22',status:'pending'}); set(LS.leaves,l); toast(t('leave_created')); renderLeaves(); lucide.createIcons(); }
-function approveLeave(id){ const l=get(LS.leaves,[]); const x=l.find(i=>i.id===id); if(x)x.status='approved'; set(LS.leaves,l); toast(t('leave_approved')); renderLeaves(); lucide.createIcons(); }
+          <div className="mt-7 overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 to-slate-800 p-6 text-white">
+            <div className="flex items-center justify-between">
+              <span className="text-[12px] font-medium uppercase tracking-[0.14em] text-white/50">Срок окупаемости</span>
+              <AnimatePresence>
+                {verdict && (
+                  <motion.span key={verdict.text}
+                    initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 4 }}
+                    className={"rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 " + toneMap[verdict.tone]}>
+                    {verdict.text}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </div>
 
-function renderTeam(){
-  const rows=TEAM.map(m=>`<tr class="border-t border-slate-100"><td class="px-4 py-3 font-medium">${esc(m.name)}</td><td class="px-4 py-3 text-slate-500">${roleLabel(m.role)}</td><td class="px-4 py-3">${m.hours} ч</td><td class="px-4 py-3"><button class="px-3 py-1.5 rounded-lg bg-cyan-50 text-cyan-700 text-xs font-medium hover:bg-cyan-100" onclick="toast(t('hours_verified')+' ${esc(m.name)}')">${t('verify_hours')}</button></td></tr>`).join('');
-  setMain(H(t('team_t'),t('team_s'))+card(tbl([t('th_emp'),t('th_role'),t('th_hpm'),t('th_action')],rows)));
-}
-function renderEmployees(){
-  const showRate=can('payroll')||isFull(session().role);
-  const rows=TEAM.map(m=>`<tr class="border-t border-slate-100"><td class="px-4 py-3 font-medium">${esc(m.name)}</td><td class="px-4 py-3 text-slate-500">${roleLabel(m.role)}</td><td class="px-4 py-3">${m.hours} ч</td><td class="px-4 py-3 text-slate-400">${showRate?KZT(m.rate)+'/час':t('hidden')}</td></tr>`).join('');
-  setMain(H(t('emp_t'),t('emp_s'))+card(tbl(['ФИО',t('th_role'),t('th_hpm'),t('th_rate')],rows)));
-}
-function renderPayslip(){
-  const h=168,g=h*RATE,tax=Math.round(g*0.1),net=g-tax;
-  const row=(l,v,c='')=>`<div class="flex justify-between py-2 border-b border-slate-100"><span class="text-slate-500">${l}</span><span class="font-semibold ${c}">${v}</span></div>`;
-  setMain(H(t('ps_t'),t('ps_s'))+card(`<div class="max-w-md">${row(t('ps_hours'),h+' ч')}${row(t('ps_rate'),KZT(RATE)+'/час')}${row(t('ps_gross'),KZT(g))}${row(t('ps_tax'),'−'+KZT(tax),'text-rose-500')}<div class="flex justify-between py-3 mt-1"><span class="font-bold text-slate-800">${t('ps_net')}</span><span class="font-extrabold text-emerald-600 text-lg">${KZT(net)}</span></div></div>`));
-}
-function renderPayroll(){
-  const rows=TEAM.map(m=>{const g=m.hours*m.rate,n=Math.round(g*0.9); return `<tr class="border-t border-slate-100"><td class="px-4 py-3 font-medium">${esc(m.name)}</td><td class="px-4 py-3">${m.hours} ч</td><td class="px-4 py-3">${KZT(m.rate)}</td><td class="px-4 py-3">${KZT(g)}</td><td class="px-4 py-3 font-semibold text-emerald-600">${KZT(n)}</td></tr>`;}).join('');
-  const tg=TEAM.reduce((a,m)=>a+m.hours*m.rate,0),tn=Math.round(tg*0.9);
-  setMain(H(t('pr_t'),t('pr_s'))+`<div class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">${kpi(t('kEmployees'),TEAM.length,'users','text-cyan-600')}${kpi(t('pr_fot_g'),KZT(tg),'banknote','text-blue-500')}${kpi(t('pr_fot_n'),KZT(tn),'wallet','text-emerald-500')}</div>`+card(tbl([t('th_emp'),t('th_hours'),t('th_rate'),t('ps_gross'),t('ps_net')],rows)));
-}
-function barChart(data,labelFn,grad){ const max=Math.max(...data.map(d=>d[1])); return `<div class="space-y-3">${data.map(([k,v])=>`<div><div class="flex justify-between text-xs mb-1"><span class="text-slate-600 font-medium">${labelFn(k)}</span><span class="text-slate-400 font-semibold">${v}</span></div><div class="h-3 bg-slate-100 rounded-full overflow-hidden"><div class="bar h-full rounded-full ${grad}" style="width:${v/max*100}%"></div></div></div>`).join('')}</div>`; }
-function renderAnalytics(){
-  setMain(H(t('an_t'),t('an_s'))+`<div class="grid lg:grid-cols-2 gap-6">${card('<h3 class="text-sm font-bold text-slate-900 mb-4">'+t('an_services')+'</h3>'+barChart(SERVICES,k=>t('svc')[k],'bg-gradient-to-r from-cyan-500 to-teal-400'))}${card('<h3 class="text-sm font-bold text-slate-900 mb-4">'+t('an_byemp')+'</h3>'+barChart(TEAM.map(m=>[m.name,m.hours]),k=>esc(k),'bg-gradient-to-r from-violet-500 to-fuchsia-400'))}</div>`);
-}
-function renderExecutive(){
-  setMain(H(t('ex_t'),t('ex_s'))+
-    `<div class="flex justify-end mb-4"><button onclick="toast(t('exported'))" class="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold flex items-center gap-2"><i data-lucide="download" class="w-4 h-4"></i>${t('export')}</button></div>`+
-    `<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">${kpi(t('revenue'),KZT(4200000),'trending-up','text-emerald-500')}${kpi(t('profit'),KZT(1450000),'piggy-bank','text-cyan-600')}${kpi(t('load'),'78%','activity','text-blue-500')}${kpi(t('retention'),'91%','heart','text-rose-500')}</div>`+
-    `<div class="grid lg:grid-cols-2 gap-6">${card('<h3 class="text-sm font-bold text-slate-900 mb-4">'+t('an_services')+'</h3>'+barChart(SERVICES,k=>t('svc')[k],'bg-gradient-to-r from-cyan-500 to-teal-400'))}${card('<h3 class="text-sm font-bold text-slate-900 mb-4">'+t('pr_t')+'</h3>'+barChart(TEAM.map(m=>[m.name,Math.round(m.hours*m.rate*0.9/1000)]),k=>esc(k),'bg-gradient-to-r from-emerald-500 to-teal-400'))}</div>`);
-}
-function renderAdmin(){
-  const b=['09:00 — Алихан С.','11:00 — Елена П.','14:00 — Нурлан А.'].map(x=>`<div class="flex items-center justify-between px-3 py-2 rounded-lg bg-slate-50"><span>${x}</span><span class="text-emerald-600 text-xs font-medium">${t('active')}</span></div>`).join('');
-  setMain(H(t('admin_t'),t('admin_s'))+`<div class="grid lg:grid-cols-2 gap-6">${card('<h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2"><i data-lucide="calendar-plus" class="w-4 h-4 text-cyan-600"></i>'+t('today_bookings')+'</h3><div class="space-y-2 text-sm">'+b+'</div>')}${card('<h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2"><i data-lucide="shield" class="w-4 h-4 text-violet-500"></i>'+t('role_bounds')+'</h3><p class="text-sm text-slate-500 leading-relaxed">'+t('admin_bounds')+'</p>')}</div>`);
-}
+            <div className="mt-3 flex items-end gap-2">
+              {ready ? (
+                <>
+                  <span className="text-[56px] font-extrabold leading-none tracking-tight">
+                    <AnimatedNumber value={months} decimals={1} locale={locale} />
+                  </span>
+                  <span className="mb-2 text-[18px] font-medium text-white/60">мес.</span>
+                </>
+              ) : (
+                <span className="py-3 text-[18px] font-medium text-white/40">Заполните поля выше</span>
+              )}
+            </div>
 
-/* ============================================================
-   UTIL / INIT
-   ============================================================ */
-let toastT;
-function toast(m){ const e=document.getElementById('toast'); e.textContent=m; e.style.opacity='1'; e.style.transform='translateX(-50%) translateY(0)'; clearTimeout(toastT); toastT=setTimeout(()=>{e.style.opacity='0';e.style.transform='translateX(-50%) translateY(-12px)';},2600); }
-function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('hidden'); }
-function tickClock(){ const c=document.getElementById('clock'); if(c)c.textContent=new Date().toLocaleTimeString('ru-RU'); }
+            {ready && Number.isFinite(months) && (
+              <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 border-t border-white/10 pt-4 text-[13px]">
+                <div>
+                  <div className="text-white/40">≈ в годах</div>
+                  <div className="font-semibold tabular-nums">{years > 0 ? years + " г " : ""}{Math.round(restMonths)} мес.</div>
+                </div>
+                <div>
+                  <div className="text-white/40">Выручка / мес.</div>
+                  <div className="font-semibold tabular-nums"><AnimatedNumber value={monthlyRevenue} decimals={0} locale={locale} /> {currency}</div>
+                </div>
+              </div>
+            )}
+          </div>
 
-applyStaticTexts();
-setInterval(tickClock,1000); tickClock();
-if(session()){ document.getElementById('login').classList.add('hidden'); document.getElementById('app').classList.remove('hidden'); buildNav(); navigate(defaultView()); }
-lucide.createIcons();
-</script>
+          <p className="mt-4 text-center text-[11px] leading-relaxed text-slate-400">
+            Формула: сумма пакета ÷ (средний чек × процедуры в месяц).<br />
+            Оценка носит ориентировочный характер.
+          </p>
+        </div>
+      );
+    }
+
+    createRoot(document.getElementById("root")).render(<CaspianDentosROI />);
+  </script>
 </body>
 </html>
