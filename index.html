@@ -1,233 +1,231 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="description" content="CaspianDentos — калькулятор окупаемости инвестиций для стоматологической клиники. Мгновенный расчёт срока окупаемости пакета." />
-<meta name="theme-color" content="#06b6d4" />
-<meta property="og:title" content="CaspianDentos · Калькулятор окупаемости" />
-<meta property="og:description" content="Считайте срок окупаемости инвестиций в клинику на лету." />
-<meta property="og:type" content="website" />
-<title>CaspianDentos · Калькулятор окупаемости</title>
-
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%2306b6d4'/%3E%3Cpath d='M5 17V7l4 4 3-3 4 5' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
-
-<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-
-<script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@18.3.1",
-    "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
-    "framer-motion": "https://esm.sh/framer-motion@11.11.17?external=react"
-  }
-}
-</script>
-
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-  *{ -webkit-tap-highlight-color:transparent; }
-  body{
-    font-family:'Inter',sans-serif;
-    background:
-      radial-gradient(1100px 600px at 15% -5%, #ecfeff 0%, transparent 55%),
-      radial-gradient(900px 600px at 100% 0%, #f0fdfa 0%, transparent 50%),
-      #f8fafc;
-    color:#1e293b;
-    min-height:100vh;
-  }
-  .fade-up{ animation:fadeUp .5s cubic-bezier(.16,1,.3,1) both; }
-  @keyframes fadeUp{ from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:none;} }
-
-  /* Slider — Stripe-like */
-  .cdt-slider{ -webkit-appearance:none; appearance:none; height:6px; border-radius:99px; cursor:pointer; outline:none; }
-  .cdt-slider::-webkit-slider-thumb{
-    -webkit-appearance:none; appearance:none; width:22px; height:22px; border-radius:50%;
-    background:#fff; border:2px solid #06b6d4; box-shadow:0 2px 8px rgba(6,182,212,.35);
-    transition:transform .15s ease, box-shadow .15s ease; margin-top:0;
-  }
-  .cdt-slider::-webkit-slider-thumb:hover{ transform:scale(1.12); }
-  .cdt-slider::-webkit-slider-thumb:active{ transform:scale(1.05); box-shadow:0 0 0 6px rgba(6,182,212,.15); }
-  .cdt-slider::-moz-range-thumb{
-    width:22px; height:22px; border-radius:50%; background:#fff; border:2px solid #06b6d4;
-    box-shadow:0 2px 8px rgba(6,182,212,.35); cursor:pointer;
-  }
-  .cdt-slider::-moz-range-track{ background:transparent; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Caspian Dentos — калькулятор окупаемости внедрения операционной системы для стоматологической клиники.">
+    <meta name="theme-color" content="#70C5D5">
+    <title>Caspian Dentos — Калькулятор окупаемости</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%2370C5D5'/%3E%3Cpath d='M5 17V7l4 4 3-3 4 5' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .custom-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #70C5D5;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+        .custom-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+        .custom-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border: none;
+            border-radius: 50%;
+            background: #70C5D5;
+            cursor: pointer;
+        }
+    </style>
 </head>
+<body class="text-slate-900 antialiased min-h-screen flex flex-col justify-between">
 
-<body class="antialiased">
-  <main class="mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center px-4 py-12">
-    <div class="fade-up mb-8 text-center">
-      <div class="mb-3 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/70 px-3.5 py-1.5 text-[12px] font-semibold text-slate-500 backdrop-blur">
-        <span class="inline-block h-1.5 w-1.5 rounded-full bg-cyan-500"></span>
-        CaspianDentos · Dental OS
-      </div>
-      <h1 class="text-[28px] font-extrabold tracking-tight text-slate-900 sm:text-[34px]">
-        Калькулятор окупаемости
-      </h1>
-      <p class="mx-auto mt-2 max-w-md text-[15px] leading-relaxed text-slate-500">
-        Узнайте, за сколько месяцев окупится инвестиция в клинику.
-        Расчёт обновляется мгновенно.
-      </p>
+    <!-- Main Container -->
+    <div class="max-w-4xl w-full mx-auto px-4 py-12 flex-grow flex flex-col justify-center">
+
+        <!-- Logo Header -->
+        <div class="text-center mb-10">
+            <img src="logo.png" alt="Caspian Dentos" class="h-20 mx-auto mb-3 object-contain"
+                 onerror="this.outerHTML='&lt;div class=&quot;text-3xl font-bold tracking-tight text-[#111827] mb-3&quot;&gt;Caspian&lt;span class=&quot;text-[#70C5D5]&quot;&gt;Dentos&lt;/span&gt;&lt;/div&gt;'">
+            <p class="text-sm font-medium tracking-wide text-slate-400 uppercase">Калькулятор эффективности внедрения</p>
+        </div>
+
+        <!-- Calculator Card -->
+        <div class="bg-white rounded-3xl shadow-xl shadow-slate-100 border border-slate-100 p-8 md:p-12 transition-all duration-300">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+
+                <!-- Inputs Sector -->
+                <div class="space-y-8">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-500 mb-2 uppercase tracking-wider">Средний чек одной процедуры</label>
+                        <div class="relative mt-1 rounded-xl shadow-sm">
+                            <input type="number" id="avgCheck" value="25000" min="0" class="block w-full rounded-xl border-0 py-4 pl-5 pr-12 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-[#70C5D5] text-xl font-medium outline-none transition-all">
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                                <span class="text-slate-400 text-lg font-medium">₸</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="block text-sm font-semibold text-slate-500 uppercase tracking-wider">Доп. процедур в месяц</label>
+                            <span id="proceduresCount" class="text-xl font-bold text-[#111827] bg-slate-50 px-3 py-1 rounded-lg border border-slate-100">15</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mb-4">Сколько процедур сохраняется или добавляется благодаря автоматизации</p>
+                        <input type="range" id="procedures" min="1" max="100" value="15" class="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer custom-slider accent-[#70C5D5]">
+                    </div>
+
+                    <!-- Tariff Info Table -->
+                    <div class="pt-6 border-t border-slate-100 space-y-3">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-400">Стоимость подключения (разово):</span>
+                            <span class="font-semibold text-slate-700">300 000 ₸</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-400">Ежемесячное ведение:</span>
+                            <span class="font-semibold text-slate-700">90 000 ₸ / мес</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ROI Results Sector -->
+                <div class="bg-slate-50 rounded-2xl p-8 flex flex-col justify-between border border-slate-100">
+                    <div class="space-y-6">
+                        <div>
+                            <span class="text-xs font-bold uppercase tracking-widest text-slate-400 block mb-1">Дополнительный доход клиники</span>
+                            <div id="monthlyRevenue" class="text-3xl font-bold text-slate-900 tracking-tight">0 ₸</div>
+                            <span class="text-xs text-slate-400 block mt-1">в месяц за счет внедрения OS</span>
+                        </div>
+
+                        <div>
+                            <span class="text-xs font-bold uppercase tracking-widest text-slate-400 block mb-1">Чистая окупаемость первоначальных инвестиций</span>
+                            <div id="paybackPeriod" class="text-4xl font-extrabold text-[#111827] tracking-tight mt-2 transition-all">Рассчитываем...</div>
+                        </div>
+                    </div>
+
+                    <!-- Soft Lead Capture -->
+                    <div class="mt-8 pt-6 border-t border-slate-200/60">
+                        <p class="text-xs text-slate-500 mb-3 text-center">Хотите увидеть, как система автоматизирует ваш склад и расписание?</p>
+                        <button onclick="openModal()" class="w-full bg-[#111827] hover:bg-slate-800 text-white text-sm font-medium py-3.5 px-4 rounded-xl transition-all duration-200 shadow-lg shadow-slate-900/10">
+                            Записаться на демо-презентацию
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
     </div>
 
-    <div id="root" class="fade-up w-full flex justify-center" style="animation-delay:.08s"></div>
-
-    <footer class="fade-up mt-10 text-center text-[12px] text-slate-400" style="animation-delay:.16s">
-      © <span id="year"></span> CaspianDentos · модуль для Dental OS
+    <!-- Minimalist Footer -->
+    <footer class="py-6 text-center text-xs text-slate-400 border-t border-slate-100 bg-white">
+        &copy; 2026 Caspian Dentos. Все права защищены.
     </footer>
-  </main>
 
-  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+    <!-- Lead Capture Modal -->
+    <div id="leadModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center p-4 z-50 transition-all duration-300">
+        <div class="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl border border-slate-100 relative">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-xl outline-none">&times;</button>
+            <h3 class="text-xl font-bold text-slate-900 mb-2">Запись на презентацию</h3>
+            <p class="text-sm text-slate-500 mb-6">Мы покажем, как сократить время регистрации пациентов до 45 секунд и настроить автосписание склада.</p>
 
-  <script type="text/babel" data-type="module" data-presets="react">
-    import { useEffect, useMemo, useState } from "react";
-    import { createRoot } from "react-dom/client";
-    import { motion, useSpring, AnimatePresence } from "framer-motion";
-
-    /* ── helpers ── */
-    const onlyDigits = (s) => String(s).replace(/[^\d]/g, "");
-
-    function AnimatedNumber({ value, decimals = 0, locale = "ru-RU" }) {
-      const spring = useSpring(value, { stiffness: 140, damping: 22, mass: 0.7 });
-      const [shown, setShown] = useState(value);
-      useEffect(() => { spring.set(Number.isFinite(value) ? value : 0); }, [spring, value]);
-      useEffect(() => spring.on("change", (v) => setShown(v)), [spring]);
-      const text = Number.isFinite(value)
-        ? new Intl.NumberFormat(locale, { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(shown)
-        : "∞";
-      return <span className="tabular-nums">{text}</span>;
-    }
-
-    function CurrencyField({ id, label, value, onChange, currency, fmt }) {
-      const display = value > 0 ? fmt.format(value) : "";
-      return (
-        <label htmlFor={id} className="block">
-          <span className="mb-2 block text-[12px] font-semibold uppercase tracking-[0.12em] text-slate-400">{label}</span>
-          <div className="relative">
-            <input
-              id={id} inputMode="numeric" autoComplete="off" placeholder="0"
-              value={display}
-              onChange={(e) => onChange(Number(onlyDigits(e.target.value)))}
-              className="w-full rounded-2xl border border-slate-200 bg-white/80 px-4 py-3.5 pr-12 text-[17px] font-semibold text-slate-900 shadow-sm transition-all placeholder:text-slate-300 focus:border-cyan-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-cyan-500/10"
-            />
-            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[15px] font-medium text-slate-400">{currency}</span>
-          </div>
-        </label>
-      );
-    }
-
-    function CaspianDentosROI({
-      currency = "₸", locale = "ru-RU",
-      defaultCheck = 85000, defaultPackage = 2400000, defaultPerMonth = 12,
-    }) {
-      const fmt = useMemo(() => new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }), [locale]);
-      const [avgCheck, setAvgCheck] = useState(defaultCheck);
-      const [pkg, setPkg] = useState(defaultPackage);
-      const [perMonth, setPerMonth] = useState(defaultPerMonth);
-
-      const monthlyRevenue = avgCheck * perMonth;
-      const months = monthlyRevenue > 0 ? pkg / monthlyRevenue : Infinity;
-      const ready = avgCheck > 0 && pkg > 0;
-      const years = Math.floor(months / 12);
-      const restMonths = months - years * 12;
-
-      const verdict = !ready ? null
-        : months <= 6  ? { tone: "emerald", text: "Стремительная окупаемость" }
-        : months <= 12 ? { tone: "cyan",    text: "Здоровая динамика" }
-        : months <= 24 ? { tone: "amber",   text: "Умеренный горизонт" }
-        :                { tone: "slate",   text: "Долгий горизонт" };
-
-      const toneMap = {
-        emerald: "bg-emerald-50 text-emerald-600 ring-emerald-500/20",
-        cyan:    "bg-cyan-50 text-cyan-600 ring-cyan-500/20",
-        amber:   "bg-amber-50 text-amber-600 ring-amber-500/20",
-        slate:   "bg-slate-100 text-slate-500 ring-slate-400/20",
-      };
-      const sliderPct = ((perMonth - 1) / 99) * 100;
-
-      return (
-        <div className="w-full max-w-md rounded-[28px] border border-slate-200/70 bg-white/90 p-6 shadow-[0_1px_3px_rgba(15,23,42,.04),0_30px_60px_-30px_rgba(15,23,42,.18)] backdrop-blur sm:p-8">
-          <div className="mb-7 flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-500/25">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 3v18h18" /><path d="m7 14 4-4 3 3 5-6" />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-[17px] font-bold leading-tight text-slate-900">Окупаемость инвестиций</h2>
-              <p className="text-[12px] text-slate-400">Расчёт на лету · без формул вручную</p>
-            </div>
-          </div>
-
-          <div className="space-y-5">
-            <CurrencyField id="cdt-check" label="Средний чек в клинике" value={avgCheck} onChange={setAvgCheck} currency={currency} fmt={fmt} />
-            <CurrencyField id="cdt-package" label="Сумма пакета / инвестиции" value={pkg} onChange={setPkg} currency={currency} fmt={fmt} />
-
-            <div>
-              <div className="mb-2 flex items-baseline justify-between">
-                <span className="text-[12px] font-semibold uppercase tracking-[0.12em] text-slate-400">Процедур в месяц</span>
-                <span className="text-[15px] font-bold tabular-nums text-cyan-600">{perMonth}</span>
-              </div>
-              <input type="range" min={1} max={100} value={perMonth}
-                onChange={(e) => setPerMonth(Number(e.target.value))}
-                className="cdt-slider w-full"
-                style={{ background: `linear-gradient(to right, #06b6d4 ${sliderPct}%, #e2e8f0 ${sliderPct}%)` }} />
-              <div className="mt-1 flex justify-between text-[11px] text-slate-300"><span>1</span><span>100</span></div>
-            </div>
-          </div>
-
-          <div className="mt-7 overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 to-slate-800 p-6 text-white">
-            <div className="flex items-center justify-between">
-              <span className="text-[12px] font-medium uppercase tracking-[0.14em] text-white/50">Срок окупаемости</span>
-              <AnimatePresence>
-                {verdict && (
-                  <motion.span key={verdict.text}
-                    initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 4 }}
-                    className={"rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 " + toneMap[verdict.tone]}>
-                    {verdict.text}
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </div>
-
-            <div className="mt-3 flex items-end gap-2">
-              {ready ? (
-                <>
-                  <span className="text-[56px] font-extrabold leading-none tracking-tight">
-                    <AnimatedNumber value={months} decimals={1} locale={locale} />
-                  </span>
-                  <span className="mb-2 text-[18px] font-medium text-white/60">мес.</span>
-                </>
-              ) : (
-                <span className="py-3 text-[18px] font-medium text-white/40">Заполните поля выше</span>
-              )}
-            </div>
-
-            {ready && Number.isFinite(months) && (
-              <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 border-t border-white/10 pt-4 text-[13px]">
+            <form class="space-y-4" onsubmit="submitForm(event)">
                 <div>
-                  <div className="text-white/40">≈ в годах</div>
-                  <div className="font-semibold tabular-nums">{years > 0 ? years + " г " : ""}{Math.round(restMonths)} мес.</div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Ваше имя</label>
+                    <input type="text" required placeholder="Иван Иванов" class="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-900 focus:ring-2 focus:ring-[#70C5D5] outline-none transition-all">
                 </div>
                 <div>
-                  <div className="text-white/40">Выручка / мес.</div>
-                  <div className="font-semibold tabular-nums"><AnimatedNumber value={monthlyRevenue} decimals={0} locale={locale} /> {currency}</div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Номер WhatsApp</label>
+                    <input type="tel" required placeholder="+7 (700) 000-00-00" class="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-900 focus:ring-2 focus:ring-[#70C5D5] outline-none transition-all">
                 </div>
-              </div>
-            )}
-          </div>
-
-          <p className="mt-4 text-center text-[11px] leading-relaxed text-slate-400">
-            Формула: сумма пакета ÷ (средний чек × процедуры в месяц).<br />
-            Оценка носит ориентировочный характер.
-          </p>
+                <button type="submit" class="w-full bg-[#70C5D5] hover:bg-[#5cb3c2] text-white font-medium py-3.5 rounded-xl transition-all duration-200 mt-2 shadow-lg shadow-[#70C5D5]/20">
+                    Отправить заявку
+                </button>
+            </form>
         </div>
-      );
-    }
+    </div>
 
-    createRoot(document.getElementById("root")).render(<CaspianDentosROI />);
-  </script>
+    <!-- Calculation Script -->
+    <script>
+        const avgCheckInput = document.getElementById('avgCheck');
+        const proceduresInput = document.getElementById('procedures');
+        const proceduresCount = document.getElementById('proceduresCount');
+        const monthlyRevenueEl = document.getElementById('monthlyRevenue');
+        const paybackPeriodEl = document.getElementById('paybackPeriod');
+
+        const SETUP_FEE = 300000;
+        const MONTHLY_FEE = 90000;
+
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('ru-RU', { style: 'decimal' }).format(value) + ' ₸';
+        }
+
+        function calculateROI() {
+            const avgCheck = parseFloat(avgCheckInput.value) || 0;
+            const procedures = parseInt(proceduresInput.value) || 0;
+
+            proceduresCount.textContent = procedures;
+
+            // Расчет валового дохода от сохраненных процедур
+            const monthlyRevenue = avgCheck * procedures;
+            monthlyRevenueEl.textContent = formatCurrency(monthlyRevenue);
+
+            // Чистая прибыль в месяц (минус подписка 90к)
+            const netMonthlyProfit = monthlyRevenue - MONTHLY_FEE;
+
+            if (netMonthlyProfit <= 0) {
+                paybackPeriodEl.innerHTML = `<span class="text-rose-500 text-lg font-medium">Не окупается. Увеличьте чек или количество процедур.</span>`;
+                return;
+            }
+
+            // Срок окупаемости первоначального взноса (300к)
+            const paybackMonths = SETUP_FEE / netMonthlyProfit;
+
+            if (paybackMonths <= 0.03) {
+                paybackPeriodEl.innerHTML = `<span class="text-[#70C5D5]">Мгновенно</span>`;
+            } else if (paybackMonths < 1) {
+                // Если окупается быстрее месяца, переводим в дни для крутого эффекта
+                const days = Math.ceil(paybackMonths * 30);
+                let dayWord = 'дней';
+                if (days % 10 === 1 && days % 100 !== 11) dayWord = 'день';
+                else if ([2, 3, 4].includes(days % 10) && ![12, 13, 14].includes(days % 100)) dayWord = 'дня';
+
+                paybackPeriodEl.innerHTML = `<span class="text-[#70C5D5]">${days}</span> <span class="text-xl font-semibold text-slate-500">${dayWord}</span>`;
+            } else {
+                const months = paybackMonths.toFixed(1);
+                paybackPeriodEl.innerHTML = `<span class="text-[#70C5D5]">${months}</span> <span class="text-xl font-semibold text-slate-500">мес.</span>`;
+            }
+        }
+
+        avgCheckInput.addEventListener('input', calculateROI);
+        proceduresInput.addEventListener('input', calculateROI);
+
+        // Modal Logic
+        function openModal() {
+            const modal = document.getElementById('leadModal');
+            modal.style.display = 'flex';
+        }
+        function closeModal() {
+            const modal = document.getElementById('leadModal');
+            modal.style.display = 'none';
+        }
+        // Закрытие по клику на фон и по Esc
+        document.getElementById('leadModal').addEventListener('click', (e) => {
+            if (e.target.id === 'leadModal') closeModal();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+        function submitForm(e) {
+            e.preventDefault();
+            alert('Спасибо за заявку! Наша команда свяжется с вами в WhatsApp для демонстрации системы.');
+            closeModal();
+        }
+
+        // Initial running
+        calculateROI();
+    </script>
 </body>
 </html>
