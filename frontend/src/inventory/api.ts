@@ -66,6 +66,19 @@ async function expectOk(res: Response): Promise<void> {
   throw new Error(extractMessage(body));
 }
 
+// -- Auth ---------------------------------------------------------------------
+// Bearer token set by the app's auth layer after login. Attached to every
+// request when present; the backend's guards enforce role-based access.
+let authToken: string | null = null;
+
+export function setAuthToken(token: string | null): void {
+  authToken = token;
+}
+
+function authHeader(): Record<string, string> {
+  return authToken ? { Authorization: `Bearer ${authToken}` } : {};
+}
+
 const jsonHeaders = { 'Content-Type': 'application/json' } as const;
 
 // The backend serializes Decimal columns as strings; coerce to number for UI.
@@ -105,7 +118,7 @@ interface RawRecipe {
 // -- Endpoints ----------------------------------------------------------------
 
 export async function listItems(): Promise<InventoryItem[]> {
-  const res = await fetch(`${API_URL}/inventory/items`);
+  const res = await fetch(`${API_URL}/inventory/items`, { headers: authHeader() });
   const raw = await parse<RawInventoryItem[]>(res);
   return raw.map((it) => ({
     id: it.id,
@@ -120,7 +133,8 @@ export async function listItems(): Promise<InventoryItem[]> {
 
 export async function getRecipe(serviceId: string): Promise<Recipe> {
   const res = await fetch(
-    `${API_URL}/services/${encodeURIComponent(serviceId)}/recipe`
+    `${API_URL}/services/${encodeURIComponent(serviceId)}/recipe`,
+    { headers: authHeader() }
   );
   const raw = await parse<RawRecipe>(res);
   const ingredients: RecipeIngredient[] = (raw?.ingredients ?? []).map((ing) => ({
@@ -136,7 +150,7 @@ export async function upsertRecipe(dto: UpsertRecipeDto): Promise<void> {
     `${API_URL}/services/${encodeURIComponent(dto.serviceId)}/recipe`,
     {
       method: 'PUT',
-      headers: jsonHeaders,
+      headers: { ...jsonHeaders, ...authHeader() },
       body: JSON.stringify(dto)
     }
   );
@@ -148,7 +162,7 @@ export async function completeExecution(executionId: string): Promise<void> {
     `${API_URL}/executions/${encodeURIComponent(executionId)}/complete`,
     {
       method: 'POST',
-      headers: jsonHeaders
+      headers: { ...jsonHeaders, ...authHeader() }
     }
   );
   return expectOk(res);
@@ -190,7 +204,9 @@ export async function listTransactions(
   if (filters.offset != null) qs.set('offset', String(filters.offset));
   const suffix = qs.toString() ? `?${qs.toString()}` : '';
 
-  const res = await fetch(`${API_URL}/inventory/transactions${suffix}`);
+  const res = await fetch(`${API_URL}/inventory/transactions${suffix}`, {
+    headers: authHeader()
+  });
   const raw = await parse<RawTransaction[]>(res);
   return raw.map((t) => ({
     id: t.id,
@@ -223,7 +239,9 @@ export async function listLowStock(
   resolved?: boolean
 ): Promise<LowStockNotification[]> {
   const suffix = resolved === undefined ? '' : `?resolved=${resolved ? 'true' : 'false'}`;
-  const res = await fetch(`${API_URL}/inventory/low-stock${suffix}`);
+  const res = await fetch(`${API_URL}/inventory/low-stock${suffix}`, {
+    headers: authHeader()
+  });
   const raw = await parse<RawLowStock[]>(res);
   return raw.map((n) => ({
     id: n.id,
@@ -240,7 +258,7 @@ export async function listLowStock(
 export async function resolveLowStock(id: string): Promise<void> {
   const res = await fetch(
     `${API_URL}/inventory/low-stock/${encodeURIComponent(id)}/resolve`,
-    { method: 'PATCH', headers: jsonHeaders }
+    { method: 'PATCH', headers: { ...jsonHeaders, ...authHeader() } }
   );
   return expectOk(res);
 }

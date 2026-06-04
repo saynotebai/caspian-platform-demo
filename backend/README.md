@@ -39,8 +39,10 @@ backend/
   src/
     lib/
       prisma.ts                          Singleton PrismaClient
-      errors.ts                          AppError / NotFoundError / InsufficientStockError / ValidationError
+      errors.ts                          AppError / NotFound / InsufficientStock / Validation / Auth / Forbidden
       error-handler.ts                   Central Express error middleware
+      auth.ts                            JWT authenticate + requireAuth / requireRole (+ tests)
+    types/express.d.ts                   Request.auth augmentation
     modules/
       inventory/
         types/inventory.types.ts         Zod DTO schemas + inferred types
@@ -62,20 +64,44 @@ backend/
 Feature routers are mounted under **`/api`** (matching the frontend client base
 `VITE_API_URL ?? '/api'`).
 
-| Method | Path                                       | Description                              |
-| ------ | ------------------------------------------ | ---------------------------------------- |
-| GET    | `/api/inventory/items`                     | List inventory items                     |
-| POST   | `/api/inventory/items`                     | Create an inventory item                 |
-| POST   | `/api/inventory/restock`                   | Increment stock (+ RESTOCK journal)      |
-| GET    | `/api/inventory/transactions`              | Stock-movement journal (filters: `inventoryItemId`, `serviceExecutionId`, `type`, `limit`, `offset`) |
-| GET    | `/api/inventory/low-stock`                 | Low-stock notifications (filter: `resolved`) |
-| PATCH  | `/api/inventory/low-stock/:id/resolve`     | Mark a low-stock notification resolved   |
-| GET    | `/api/services/:serviceId/recipe`          | Get a service recipe                      |
-| PUT    | `/api/services/:serviceId/recipe`          | Upsert a service recipe (replace ingredients) |
-| POST   | `/api/executions/:id/complete`             | Complete execution + auto-deduct materials |
-| GET    | `/health`                                  | Health check                             |
+| Method | Path                                       | Roles            | Description                              |
+| ------ | ------------------------------------------ | ---------------- | ---------------------------------------- |
+| GET    | `/api/inventory/items`                     | any authed       | List inventory items                     |
+| POST   | `/api/inventory/items`                     | ADMIN / MANAGER  | Create an inventory item                 |
+| POST   | `/api/inventory/restock`                   | ADMIN / MANAGER  | Increment stock (+ RESTOCK journal)      |
+| GET    | `/api/inventory/transactions`              | ADMIN / MANAGER  | Stock-movement journal (filters: `inventoryItemId`, `serviceExecutionId`, `type`, `limit`, `offset`) |
+| GET    | `/api/inventory/low-stock`                 | ADMIN / MANAGER  | Low-stock notifications (filter: `resolved`) |
+| PATCH  | `/api/inventory/low-stock/:id/resolve`     | ADMIN / MANAGER  | Mark a low-stock notification resolved   |
+| GET    | `/api/services/:serviceId/recipe`          | any authed       | Get a service recipe                      |
+| PUT    | `/api/services/:serviceId/recipe`          | ADMIN / MANAGER  | Upsert a service recipe (replace ingredients) |
+| POST   | `/api/executions/:id/complete`             | ADMIN / DOCTOR   | Complete execution + auto-deduct materials |
+| GET    | `/health`                                  | public           | Health check                             |
 
 All responses use the envelope `{ ok: boolean, data?, message? }`.
+
+## Authentication & roles
+
+Auth is JWT-based. A `Bearer` token is verified by the `authenticate` middleware
+(soft: a missing token is allowed through; an invalid/expired one → 401). The
+decoded identity is attached to `req.auth = { userId, role }`. Per-route guards
+enforce access:
+
+- `requireAuth` → 401 unless authenticated.
+- `requireRole(...roles)` → 401 unless authenticated, 403 unless the role matches.
+
+Roles: `ADMIN`, `MANAGER`, `DOCTOR`, `RECEPTION`. Identity lives entirely in the
+JWT claims (`sub` = userId, `role`) — no User table, consistent with
+`InventoryTransaction.userId` being a plain id. The acting user for restocks and
+completions is taken from the token, **never** from the request body.
+
+Set `AUTH_JWT_SECRET` in the environment. Issue a token with the `signToken`
+helper (`src/lib/auth.ts`) from your real login flow / for local testing:
+
+```ts
+import { signToken } from './lib/auth.js';
+const token = signToken({ userId: 'u-123', role: 'MANAGER' });
+// → Authorization: Bearer <token>
+```
 
 ## Setup
 

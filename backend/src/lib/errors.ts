@@ -31,6 +31,18 @@ export class ValidationError extends AppError {
   }
 }
 
+export class AuthError extends AppError {
+  constructor(publicMessage = 'Требуется авторизация.', internalMessage?: string) {
+    super(401, publicMessage, internalMessage);
+  }
+}
+
+export class ForbiddenError extends AppError {
+  constructor(publicMessage = 'Недостаточно прав для этого действия.', internalMessage?: string) {
+    super(403, publicMessage, internalMessage);
+  }
+}
+
 export class InsufficientStockError extends AppError {
   public readonly itemName: string;
   public readonly available: number;

@@ -58,8 +58,7 @@ export async function restock(
     if (!parsed.success) {
       return next(new ValidationError('Некорректные данные пополнения.'));
     }
-    const actorUserId = typeof req.body?.userId === 'string' ? req.body.userId : undefined;
-    const data = await inventoryService.restock(parsed.data, actorUserId);
+    const data = await inventoryService.restock(parsed.data, req.auth?.userId);
     res.json({ ok: true, data });
   } catch (err) {
     next(err);

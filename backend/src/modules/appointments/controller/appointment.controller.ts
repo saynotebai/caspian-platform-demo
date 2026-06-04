@@ -20,8 +20,8 @@ export async function completeServiceExecution(
     if (!id.success) {
       return next(new ValidationError('Некорректный идентификатор выполнения услуги.'));
     }
-    const actorUserId = typeof req.body?.userId === 'string' ? req.body.userId : undefined;
-    const data = await appointmentService.completeServiceExecution(id.data, actorUserId);
+    // The acting user comes from the authenticated token, not the request body.
+    const data = await appointmentService.completeServiceExecution(id.data, req.auth?.userId);
     res.json({ ok: true, data });
   } catch (err) {
     next(err);

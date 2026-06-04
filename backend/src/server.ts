@@ -1,6 +1,7 @@
 import express, { type Application } from 'express';
 import { inventoryRouter } from './modules/inventory/routes/inventory.routes.js';
 import { appointmentRouter } from './modules/appointments/routes/appointment.routes.js';
+import { authenticate } from './lib/auth.js';
 import { errorHandler } from './lib/error-handler.js';
 
 // =============================================================================
@@ -14,9 +15,14 @@ export const app: Application = express();
 
 app.use(express.json());
 
+// Public health check — no auth.
 app.get('/health', (_req, res) => {
   res.json({ ok: true, data: { status: 'ok' } });
 });
+
+// Soft authentication: decodes a Bearer token when present (req.auth). Per-route
+// guards (requireAuth / requireRole) enforce access.
+app.use(authenticate);
 
 // Feature routers are mounted under /api to match the frontend client base
 // (VITE_API_URL ?? '/api'), e.g. /api/inventory/items, /api/executions/:id/complete.
