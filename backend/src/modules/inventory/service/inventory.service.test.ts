@@ -96,7 +96,7 @@ describe('InventoryService.deductForServiceExecution', () => {
 
     // Conditional decrement used a `gte` guard and a `decrement` mutation.
     expect(tx.inventoryItem.updateMany).toHaveBeenCalledTimes(1);
-    const call = tx.inventoryItem.updateMany.mock.calls[0]![0] as {
+    const call = (tx.inventoryItem.updateMany.mock.calls[0] as unknown[])[0] as {
       where: { id: string; currentStock: { gte: unknown } };
       data: { currentStock: { decrement: unknown } };
     };
@@ -127,6 +127,8 @@ describe('InventoryService.deductForServiceExecution', () => {
       service.deductForServiceExecution(tx as any, EXECUTION_ID),
     ).rejects.toBeInstanceOf(InsufficientStockError);
 
+    // The user-facing (public) message is Russian per spec; Error.message holds
+    // the internal English detail, so assert against `publicMessage`.
     await expect(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       service.deductForServiceExecution(makeFakeTx({
@@ -140,7 +142,9 @@ describe('InventoryService.deductForServiceExecution', () => {
         }),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       }) as any, EXECUTION_ID),
-    ).rejects.toThrow('Недостаточно материала: Композит Filtek');
+    ).rejects.toMatchObject({
+      publicMessage: expect.stringContaining('Недостаточно материала: Композит Filtek'),
+    });
 
     // Never journaled on insufficient stock.
     expect(tx.inventoryTransaction.create).not.toHaveBeenCalled();
