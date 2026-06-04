@@ -3,7 +3,9 @@ import { z } from 'zod';
 import { inventoryService } from '../service/inventory.service.js';
 import {
   CreateInventoryItemDto,
+  LowStockQuery,
   RestockDto,
+  TransactionHistoryQuery,
   UpsertRecipeDto,
 } from '../types/inventory.types.js';
 import { ValidationError } from '../../../lib/errors.js';
@@ -97,6 +99,57 @@ export async function upsertRecipe(
       return next(new ValidationError('Некорректные данные рецепта.'));
     }
     const data = await inventoryService.upsertRecipe(parsed.data);
+    res.json({ ok: true, data });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getTransactions(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const parsed = TransactionHistoryQuery.safeParse(req.query);
+    if (!parsed.success) {
+      return next(new ValidationError('Некорректные параметры журнала.'));
+    }
+    const data = await inventoryService.getTransactionHistory(parsed.data);
+    res.json({ ok: true, data });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getLowStock(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const parsed = LowStockQuery.safeParse(req.query);
+    if (!parsed.success) {
+      return next(new ValidationError('Некорректные параметры фильтра.'));
+    }
+    const data = await inventoryService.listLowStockNotifications(parsed.data);
+    res.json({ ok: true, data });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function resolveLowStock(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const id = serviceIdParam.safeParse(req.params.id);
+    if (!id.success) {
+      return next(new ValidationError('Некорректный идентификатор уведомления.'));
+    }
+    const data = await inventoryService.resolveLowStockNotification(id.data);
     res.json({ ok: true, data });
   } catch (err) {
     next(err);

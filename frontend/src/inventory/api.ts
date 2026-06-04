@@ -1,4 +1,12 @@
-import type { InventoryItem, Recipe, RecipeIngredient, UpsertRecipeDto } from './dto';
+import type {
+  InventoryItem,
+  InventoryTransaction,
+  InventoryTxType,
+  LowStockNotification,
+  Recipe,
+  RecipeIngredient,
+  UpsertRecipeDto
+} from './dto';
 
 // Base URL: configurable per environment, defaults to a same-origin /api proxy.
 const API_URL = (import.meta.env.VITE_API_URL ?? '/api').replace(/\/$/, '');
@@ -142,6 +150,97 @@ export async function completeExecution(executionId: string): Promise<void> {
       method: 'POST',
       headers: jsonHeaders
     }
+  );
+  return expectOk(res);
+}
+
+// -- Journal (stock-movement history) -----------------------------------------
+
+interface RawTransaction {
+  id: string;
+  type: InventoryTxType;
+  quantity: number | string;
+  createdAt: string;
+  userId?: string | null;
+  inventoryItem?: { id: string; name: string; unit?: RawUnit | null } | null;
+  serviceExecution?: {
+    id: string;
+    patientId?: string | null;
+    serviceId?: string | null;
+    service?: { id: string; name: string } | null;
+  } | null;
+}
+
+export interface TransactionFilters {
+  inventoryItemId?: string;
+  serviceExecutionId?: string;
+  type?: InventoryTxType;
+  limit?: number;
+  offset?: number;
+}
+
+export async function listTransactions(
+  filters: TransactionFilters = {}
+): Promise<InventoryTransaction[]> {
+  const qs = new URLSearchParams();
+  if (filters.inventoryItemId) qs.set('inventoryItemId', filters.inventoryItemId);
+  if (filters.serviceExecutionId) qs.set('serviceExecutionId', filters.serviceExecutionId);
+  if (filters.type) qs.set('type', filters.type);
+  if (filters.limit != null) qs.set('limit', String(filters.limit));
+  if (filters.offset != null) qs.set('offset', String(filters.offset));
+  const suffix = qs.toString() ? `?${qs.toString()}` : '';
+
+  const res = await fetch(`${API_URL}/inventory/transactions${suffix}`);
+  const raw = await parse<RawTransaction[]>(res);
+  return raw.map((t) => ({
+    id: t.id,
+    type: t.type,
+    quantity: toNumber(t.quantity),
+    createdAt: t.createdAt,
+    userId: t.userId ?? undefined,
+    itemId: t.inventoryItem?.id ?? '',
+    itemName: t.inventoryItem?.name ?? '—',
+    unitCode: t.inventoryItem?.unit?.code,
+    serviceId: t.serviceExecution?.service?.id ?? t.serviceExecution?.serviceId ?? undefined,
+    serviceName: t.serviceExecution?.service?.name,
+    patientId: t.serviceExecution?.patientId ?? undefined
+  }));
+}
+
+// -- Low-stock notifications (admin / manager) --------------------------------
+
+interface RawLowStock {
+  id: string;
+  inventoryItemId: string;
+  inventoryItem?: { id: string; name: string; unit?: RawUnit | null } | null;
+  stockAtEvent: number | string;
+  minStock: number | string;
+  resolved: boolean;
+  createdAt: string;
+}
+
+export async function listLowStock(
+  resolved?: boolean
+): Promise<LowStockNotification[]> {
+  const suffix = resolved === undefined ? '' : `?resolved=${resolved ? 'true' : 'false'}`;
+  const res = await fetch(`${API_URL}/inventory/low-stock${suffix}`);
+  const raw = await parse<RawLowStock[]>(res);
+  return raw.map((n) => ({
+    id: n.id,
+    itemId: n.inventoryItem?.id ?? n.inventoryItemId,
+    itemName: n.inventoryItem?.name ?? '—',
+    unitCode: n.inventoryItem?.unit?.code,
+    stockAtEvent: toNumber(n.stockAtEvent),
+    minStock: toNumber(n.minStock),
+    resolved: n.resolved,
+    createdAt: n.createdAt
+  }));
+}
+
+export async function resolveLowStock(id: string): Promise<void> {
+  const res = await fetch(
+    `${API_URL}/inventory/low-stock/${encodeURIComponent(id)}/resolve`,
+    { method: 'PATCH', headers: jsonHeaders }
   );
   return expectOk(res);
 }

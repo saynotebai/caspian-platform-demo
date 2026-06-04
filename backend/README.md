@@ -23,7 +23,10 @@ deduction, and every journal row all happen inside **one** `prisma.$transaction`
 - **Recipe-driven** — recipes are data (`ServiceRecipe` + `RecipeIngredient`),
   never hardcoded.
 - **Stock-aware** — after each deduction, if the new stock drops below `minStock`
-  a `LowStockNotification` row is created.
+  a `LowStockNotification` row is created (exposed via the low-stock feed for
+  admin / manager).
+- **Auditable** — every movement is journaled; the history endpoint reconstructs
+  the full trail (date, type, material, quantity, service, patient).
 - **Friendly errors** — insufficient stock returns HTTP 409 with a Russian
   message: `Недостаточно материала: <name>. Остаток: <available>. Требуется: <required>.`
   Internal/DB errors are logged server-side and never leaked to the client.
@@ -43,7 +46,8 @@ backend/
         types/inventory.types.ts         Zod DTO schemas + inferred types
         model/inventory.repository.ts    Thin Prisma data-access helpers
         service/inventory.service.ts     Core business logic (deductForServiceExecution, etc.)
-        service/inventory.service.test.ts  Vitest unit tests (fake tx, no DB)
+        service/inventory.service.test.ts  Vitest: deduction (fake tx, no DB)
+        service/inventory.journal.test.ts  Vitest: journal + low-stock (mocked repo)
         controller/inventory.controller.ts
         routes/inventory.routes.ts
       appointments/
@@ -55,15 +59,21 @@ backend/
 
 ## Routes
 
-| Method | Path                              | Description                              |
-| ------ | --------------------------------- | ---------------------------------------- |
-| GET    | `/inventory/items`                | List inventory items                     |
-| POST   | `/inventory/items`                | Create an inventory item                 |
-| POST   | `/inventory/restock`              | Increment stock (+ RESTOCK journal)      |
-| GET    | `/services/:serviceId/recipe`     | Get a service recipe                      |
-| PUT    | `/services/:serviceId/recipe`     | Upsert a service recipe (replace ingredients) |
-| POST   | `/executions/:id/complete`        | Complete execution + auto-deduct materials |
-| GET    | `/health`                         | Health check                             |
+Feature routers are mounted under **`/api`** (matching the frontend client base
+`VITE_API_URL ?? '/api'`).
+
+| Method | Path                                       | Description                              |
+| ------ | ------------------------------------------ | ---------------------------------------- |
+| GET    | `/api/inventory/items`                     | List inventory items                     |
+| POST   | `/api/inventory/items`                     | Create an inventory item                 |
+| POST   | `/api/inventory/restock`                   | Increment stock (+ RESTOCK journal)      |
+| GET    | `/api/inventory/transactions`              | Stock-movement journal (filters: `inventoryItemId`, `serviceExecutionId`, `type`, `limit`, `offset`) |
+| GET    | `/api/inventory/low-stock`                 | Low-stock notifications (filter: `resolved`) |
+| PATCH  | `/api/inventory/low-stock/:id/resolve`     | Mark a low-stock notification resolved   |
+| GET    | `/api/services/:serviceId/recipe`          | Get a service recipe                      |
+| PUT    | `/api/services/:serviceId/recipe`          | Upsert a service recipe (replace ingredients) |
+| POST   | `/api/executions/:id/complete`             | Complete execution + auto-deduct materials |
+| GET    | `/health`                                  | Health check                             |
 
 All responses use the envelope `{ ok: boolean, data?, message? }`.
 

@@ -4,7 +4,9 @@ import { InsufficientStockError, NotFoundError, ValidationError } from '../../..
 import * as repo from '../model/inventory.repository.js';
 import type {
   CreateInventoryItemDto,
+  LowStockQuery,
   RestockDto,
+  TransactionHistoryQuery,
   UpsertRecipeDto,
 } from '../types/inventory.types.js';
 
@@ -184,6 +186,33 @@ export class InventoryService {
     } catch (err) {
       if (isRecordNotFound(err)) {
         throw new NotFoundError('Материал не найден.');
+      }
+      throw err;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Stock-movement journal (history can be fully reconstructed).
+  // ---------------------------------------------------------------------------
+  async getTransactionHistory(query: TransactionHistoryQuery) {
+    return repo.listTransactions(query);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Low-stock notifications (admin / manager feed).
+  // ---------------------------------------------------------------------------
+  async listLowStockNotifications(query: LowStockQuery) {
+    const resolved =
+      query.resolved === undefined ? undefined : query.resolved === 'true';
+    return repo.listLowStockNotifications({ resolved });
+  }
+
+  async resolveLowStockNotification(id: string) {
+    try {
+      return await repo.resolveLowStockNotification(id);
+    } catch (err) {
+      if (isRecordNotFound(err)) {
+        throw new NotFoundError('Уведомление не найдено.');
       }
       throw err;
     }

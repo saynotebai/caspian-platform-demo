@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import './index.css';
 import { RecipeEditor } from './inventory/RecipeEditor';
 import { CompleteExecutionButton } from './inventory/CompleteExecutionButton';
+import { LowStockBanner } from './inventory/LowStockBanner';
+import { InventoryJournal } from './inventory/InventoryJournal';
 
 // Sample identifiers for the demo page. In a real app these come from routing
 // / the selected service + scheduled execution. Relations are ID-based only.
@@ -66,6 +68,12 @@ function App() {
         </p>
         <CompleteExecutionButton executionId={SAMPLE_EXECUTION_ID} />
       </section>
+
+      {/* Low-stock feed — appears only when there are unresolved breaches. */}
+      <LowStockBanner />
+
+      {/* Stock-movement journal — full, reconstructable history. */}
+      <InventoryJournal />
     </main>
   );
 }

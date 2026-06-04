@@ -153,3 +153,57 @@ export async function upsertRecipe(dto: UpsertRecipeDto, db: Db = prisma) {
 export function countItemsByIds(ids: string[], db: Db = prisma) {
   return db.inventoryItem.count({ where: { id: { in: ids } } });
 }
+
+// Stock-movement journal. Joins the material (+unit) and, for consumptions, the
+// execution → service + patient so history is fully reconstructable.
+export function listTransactions(
+  filters: {
+    inventoryItemId?: string;
+    serviceExecutionId?: string;
+    type?: 'CONSUMPTION' | 'RESTOCK' | 'ADJUSTMENT';
+    limit: number;
+    offset: number;
+  },
+  db: Db = prisma,
+) {
+  return db.inventoryTransaction.findMany({
+    where: {
+      inventoryItemId: filters.inventoryItemId,
+      serviceExecutionId: filters.serviceExecutionId,
+      type: filters.type,
+    },
+    orderBy: { createdAt: 'desc' },
+    take: filters.limit,
+    skip: filters.offset,
+    include: {
+      inventoryItem: { include: { unit: true } },
+      serviceExecution: {
+        select: {
+          id: true,
+          patientId: true,
+          serviceId: true,
+          service: { select: { id: true, name: true } },
+        },
+      },
+    },
+  });
+}
+
+export function listLowStockNotifications(
+  filters: { resolved?: boolean },
+  db: Db = prisma,
+) {
+  return db.lowStockNotification.findMany({
+    where: { resolved: filters.resolved },
+    orderBy: { createdAt: 'desc' },
+    include: { inventoryItem: { include: { unit: true } } },
+  });
+}
+
+export function resolveLowStockNotification(id: string, db: Db = prisma) {
+  return db.lowStockNotification.update({
+    where: { id },
+    data: { resolved: true },
+    include: { inventoryItem: { include: { unit: true } } },
+  });
+}

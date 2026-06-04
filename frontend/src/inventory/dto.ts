@@ -48,3 +48,31 @@ export interface RecipeIngredient {
 export interface Recipe {
   ingredients: RecipeIngredient[];
 }
+
+export type InventoryTxType = 'CONSUMPTION' | 'RESTOCK' | 'ADJUSTMENT';
+
+// A row of the stock-movement journal (history is fully reconstructable).
+export interface InventoryTransaction {
+  id: string;
+  type: InventoryTxType;
+  quantity: number;
+  createdAt: string;
+  userId?: string;
+  itemId: string;
+  itemName: string;
+  unitCode?: string;
+  serviceId?: string;
+  serviceName?: string;
+  patientId?: string;
+}
+
+export interface LowStockNotification {
+  id: string;
+  itemId: string;
+  itemName: string;
+  unitCode?: string;
+  stockAtEvent: number;
+  minStock: number;
+  resolved: boolean;
+  createdAt: string;
+}

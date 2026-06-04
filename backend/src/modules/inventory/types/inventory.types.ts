@@ -28,7 +28,25 @@ export const CreateInventoryItemDto = z.object({
   currentStock: z.number().min(0).default(0),
 });
 
+// Stock-movement journal query. Query-string values arrive as strings, so
+// limit/offset are coerced. All filters are optional.
+export const TransactionHistoryQuery = z.object({
+  inventoryItemId: z.string().uuid().optional(),
+  serviceExecutionId: z.string().uuid().optional(),
+  type: z.enum(['CONSUMPTION', 'RESTOCK', 'ADJUSTMENT']).optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
+// Low-stock notification feed query (admin/manager). `resolved` arrives as a
+// query string, so it is parsed from 'true' | 'false'.
+export const LowStockQuery = z.object({
+  resolved: z.enum(['true', 'false']).optional(),
+});
+
 export type RecipeIngredientInput = z.infer<typeof RecipeIngredientInput>;
 export type UpsertRecipeDto = z.infer<typeof UpsertRecipeDto>;
 export type RestockDto = z.infer<typeof RestockDto>;
 export type CreateInventoryItemDto = z.infer<typeof CreateInventoryItemDto>;
+export type TransactionHistoryQuery = z.infer<typeof TransactionHistoryQuery>;
+export type LowStockQuery = z.infer<typeof LowStockQuery>;
