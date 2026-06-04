@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { listTransactions } from './api';
 import type { InventoryTxType } from './dto';
@@ -35,13 +35,27 @@ function formatDate(iso: string): string {
     : d.toLocaleString('ru-RU', { dateStyle: 'medium', timeStyle: 'short' });
 }
 
+const PAGE_SIZE = 20;
+
 export function InventoryJournal() {
   const [type, setType] = useState<InventoryTxType | undefined>(undefined);
+  const [page, setPage] = useState(0);
 
-  const { data: rows = [], isLoading, isError, error } = useQuery({
-    queryKey: ['inventory-journal', type ?? 'all'],
-    queryFn: () => listTransactions({ type, limit: 100 })
+  // Changing the filter resets to the first page.
+  function changeType(next?: InventoryTxType) {
+    setType(next);
+    setPage(0);
+  }
+
+  const { data: rows = [], isLoading, isError, error, isFetching } = useQuery({
+    queryKey: ['inventory-journal', type ?? 'all', page],
+    queryFn: () => listTransactions({ type, limit: PAGE_SIZE, offset: page * PAGE_SIZE }),
+    placeholderData: keepPreviousData
   });
+
+  // No total count from the API → infer "has next" from a full page.
+  const hasNext = rows.length === PAGE_SIZE;
+  const hasPrev = page > 0;
 
   return (
     <section className="rounded-2xl border border-slate-200/70 bg-white p-7 shadow-soft">
@@ -57,7 +71,7 @@ export function InventoryJournal() {
               <button
                 key={f.label}
                 type="button"
-                onClick={() => setType(f.value)}
+                onClick={() => changeType(f.value)}
                 className={
                   'rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ' +
                   (active ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700')
@@ -124,6 +138,33 @@ export function InventoryJournal() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {(hasPrev || hasNext) && (
+        <div className="mt-4 flex items-center justify-between">
+          <span className="text-xs text-slate-400">
+            Страница {page + 1}
+            {isFetching ? ' · обновление…' : ''}
+          </span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              disabled={!hasPrev || isFetching}
+              className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors enabled:hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Назад
+            </button>
+            <button
+              type="button"
+              onClick={() => setPage((p) => p + 1)}
+              disabled={!hasNext || isFetching}
+              className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors enabled:hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Вперёд
+            </button>
+          </div>
         </div>
       )}
     </section>

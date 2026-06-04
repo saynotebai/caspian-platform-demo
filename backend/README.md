@@ -110,6 +110,7 @@ npm install
 cp .env.example .env        # then set DATABASE_URL
 npm run prisma:migrate      # generate + apply migrations (prisma migrate dev)
 npm run prisma:generate     # generate the Prisma client (run by migrate too)
+npm run db:seed             # idempotent demo data (units, items, recipe, execution, journal)
 npm run dev                 # tsx watch src/server.ts
 ```
 
