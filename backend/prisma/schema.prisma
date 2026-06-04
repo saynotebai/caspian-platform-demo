@@ -1,0 +1,133 @@
+// =============================================================================
+// Dental OS — Inventory module Prisma schema
+//
+// IMPORTANT: Migrations MUST be generated via `prisma migrate dev`.
+// Do NOT hand-edit generated SQL migrations in production. Treat this schema
+// as the single source of truth and let Prisma derive migrations from it.
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Unit {
+  id          String          @id @default(uuid())
+  name        String
+  code        String          @unique
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+  ingredients InventoryItem[]
+
+  @@map("units")
+}
+
+model InventoryItem {
+  id                    String                 @id @default(uuid())
+  sku                   String                 @unique
+  name                  String
+  unitId                String                 @map("unit_id")
+  unit                  Unit                   @relation(fields: [unitId], references: [id])
+  currentStock          Decimal                @default(0) @map("current_stock") @db.Decimal(14, 3)
+  minStock              Decimal                @default(0) @map("min_stock") @db.Decimal(14, 3)
+  createdAt             DateTime               @default(now()) @map("created_at")
+  updatedAt             DateTime               @updatedAt @map("updated_at")
+  recipeIngredients     RecipeIngredient[]
+  transactions          InventoryTransaction[]
+  lowStockNotifications LowStockNotification[]
+
+  @@map("inventory_items")
+}
+
+model Service {
+  id         String             @id @default(uuid())
+  name       String
+  recipe     ServiceRecipe?
+  executions ServiceExecution[]
+
+  @@map("services")
+}
+
+model ServiceRecipe {
+  id          String             @id @default(uuid())
+  serviceId   String             @unique @map("service_id")
+  service     Service            @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  ingredients RecipeIngredient[]
+
+  @@map("service_recipes")
+}
+
+model RecipeIngredient {
+  id              String        @id @default(uuid())
+  recipeId        String        @map("recipe_id")
+  recipe          ServiceRecipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  inventoryItemId String        @map("inventory_item_id")
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  quantity        Decimal       @db.Decimal(14, 3)
+
+  @@unique([recipeId, inventoryItemId])
+  @@map("recipe_ingredients")
+}
+
+enum ServiceExecutionStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  DONE
+  CANCELLED
+}
+
+model ServiceExecution {
+  id           String                 @id @default(uuid())
+  serviceId    String                 @map("service_id")
+  service      Service                @relation(fields: [serviceId], references: [id])
+  patientId    String?                @map("patient_id")
+  status       ServiceExecutionStatus @default(PENDING)
+  completedAt  DateTime?              @map("completed_at")
+  createdAt    DateTime               @default(now()) @map("created_at")
+  updatedAt    DateTime               @updatedAt @map("updated_at")
+  transactions InventoryTransaction[]
+
+  @@map("service_executions")
+}
+
+enum InventoryTxType {
+  CONSUMPTION
+  RESTOCK
+  ADJUSTMENT
+}
+
+model InventoryTransaction {
+  id                 String            @id @default(uuid())
+  inventoryItemId    String            @map("inventory_item_id")
+  inventoryItem      InventoryItem     @relation(fields: [inventoryItemId], references: [id])
+  serviceExecutionId String?           @map("service_execution_id")
+  serviceExecution   ServiceExecution? @relation(fields: [serviceExecutionId], references: [id])
+  userId             String?           @map("user_id")
+  quantity           Decimal           @db.Decimal(14, 3)
+  type               InventoryTxType
+  createdAt          DateTime          @default(now()) @map("created_at")
+
+  // Idempotency: CONSUMPTION rows set serviceExecutionId, so a given
+  // (execution, item) pair can only be consumed once. RESTOCK/ADJUSTMENT
+  // rows leave serviceExecutionId NULL — Postgres allows multiple NULLs in a
+  // composite unique index, so this does not block restocks.
+  @@unique([serviceExecutionId, inventoryItemId])
+  @@map("inventory_transactions")
+}
+
+model LowStockNotification {
+  id              String        @id @default(uuid())
+  inventoryItemId String        @map("inventory_item_id")
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  stockAtEvent    Decimal       @map("stock_at_event") @db.Decimal(14, 3)
+  minStock        Decimal       @map("min_stock") @db.Decimal(14, 3)
+  resolved        Boolean       @default(false)
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  @@map("low_stock_notifications")
+}
